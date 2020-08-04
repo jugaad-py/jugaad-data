@@ -4,6 +4,7 @@
 
 [![Build Status](https://travis-ci.org/jugaad-py/jugaad-data.svg?branch=master)](https://travis-ci.org/jugaad-py/jugaad-data)
 
+
 # Features
 
 * Supports [new NSE website](https://www.nseindia.com/), (All libraries based on old NSE website might stop working)
