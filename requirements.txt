@@ -1,0 +1,5 @@
+requests
+lxml
+beautifulsoup4
+click==7.1.2
+appdirs==1.4.4

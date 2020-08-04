@@ -1,0 +1,13 @@
+env:
+    - PYTHONWARNINGS="ignore:Unverified HTTPS request"
+language: python
+python:
+    - "3.6"      # current default Python on Travis CI
+    - "3.7"
+    - "3.8"
+install:
+    - pip install -r requirements.dev.txt
+    - pip install -r requirements.txt
+
+script:
+    - pytest

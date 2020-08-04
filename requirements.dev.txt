@@ -1,0 +1,6 @@
+pytest==6.0.1
+pytest-testmon
+pytest-watch
+pyfakefs
+pandas
+jupyterlab
