@@ -103,6 +103,7 @@ class NSEHistory:
 
 h = NSEHistory()
 stock_raw = h.stock_raw
+derivatives_raw = h.derivatives_raw
 stock_select_headers = [  "CH_TIMESTAMP", "CH_SERIES", 
                     "CH_OPENING_PRICE", "CH_TRADE_HIGH_PRICE",
                     "CH_TRADE_LOW_PRICE", "CH_PREVIOUS_CLS_PRICE",
@@ -172,6 +173,20 @@ futures_final_headers = [   "DATE", "EXPIRY",
                     "PREMIUM VALUE", "OPEN INTEREST", "CHANGE IN OI",
                      "SYMBOL"]
 
+
+options_select_headers = [  "FH_TIMESTAMP", "FH_EXPIRY_DT", "FH_OPTION_TYPE", "FH_STRIKE_PRICE",
+                    "FH_OPENING_PRICE", "FH_TRADE_HIGH_PRICE",
+                    "FH_TRADE_LOW_PRICE", "FH_CLOSING_PRICE",
+                    "FH_LAST_TRADED_PRICE", "FH_SETTLE_PRICE", "FH_TOT_TRADED_QTY", "FH_MARKET_LOT",
+                    "FH_TOT_TRADED_VAL", "FH_OPEN_INT", "FH_CHANGE_IN_OI", 
+                    "FH_SYMBOL"]
+options_final_headers = [   "DATE", "EXPIRY", "OPTION TYPE", "STRIKE PRICE",
+                    "OPEN", "HIGH",
+                    "LOW", "CLOSE",
+                    "LTP", "SETTLE PRICE", "TOTAL TRADED QUANTITY", "MARKET LOT",
+                    "PREMIUM VALUE", "OPEN INTEREST", "CHANGE IN OI",
+                     "SYMBOL"]
+
 def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None, output="", show_progress=True):
     if show_progress:
         h = NSEHistory()
@@ -192,6 +207,9 @@ def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, st
     if "FUT" in instrument_type:
         final_headers = futures_final_headers
         select_headers = futures_select_headers
+    if "OPT" in instrument_type:
+        final_headers = options_final_headers
+        select_headers = options_select_headers
     if raw:
         with open(output, 'w') as fp:
             fp.write(",".join(final_headers) + '\n')
@@ -204,15 +222,24 @@ def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, st
 def derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None):
     if not pd:
         raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
-    raw = stock_raw(symbol, from_date, to_date, series)
+    raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None)
+    futures_dtype = [  ut.np_date, ut.np_date, 
+                ut.np_float, ut.np_float,
+                ut.np_float, ut.np_float,
+                ut.np_float, ut.np_float,
+                ut.np_int, ut.np_int,
+                ut.np_float, ut.np_float, ut.np_float,
+                str]
+
+    if "FUT" in instrument_type:
+        final_headers = futures_final_headers
+        select_headers = futures_select_headers
+        dtypes = futures_dtype
+    if "OPT" in instrument_type:
+        final_headers = options_final_headers
+        select_headers = options_select_headers
     df = pd.DataFrame(raw)[select_headers]
     df.columns = final_headers
-    dtypes = [  ut.np_date,  str,
-                ut.np_float, ut.np_float,
-                ut.np_float, ut.np_float,
-                ut.np_float, ut.np_float,
-                ut.np_float, ut.np_float, ut.np_float,
-                ut.np_int, ut.np_float, ut.np_int, str]
     for i, h in enumerate(final_headers):
         df[h] = df[h].apply(dtypes[i])
     return df

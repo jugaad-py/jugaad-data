@@ -193,7 +193,7 @@ class TestDerivatives(TestCase):
         assert j[0]['FH_INSTRUMENT'] == instrument
         assert j[0]['FH_LAST_TRADED_PRICE'] == '2.60'
         assert j[0]['FH_OPTION_TYPE'] == "CE"
-        warnings.warn("Test is work in progress because NSE's new website does not provide correct data")
+        warnings.warn("Test is work in progress because NSE's new website does not provide Derivatives correct data")
 
     def test__index_futures(self):
         """ Test stock futures at _derivative level ie without _pool"""
@@ -277,5 +277,65 @@ class TestDerivatives(TestCase):
             assert r[-1][0] == from_date.strftime("%d-%b-%Y")
             assert r[-1][2] == "162.65"
             assert r[1][2] == "192.85"
+    
+    def test_options_csv(self):
+        symbol = "NIFTY"
+        from_date = date(2020, 6, 1)
+        to_date = date(2020, 7, 30) 
+        expiry_date = to_date
+        instrument = "OPTIDX"
+        strike_price = 10000
+        option_type = "CE"
+        j = nse.derivatives_csv(symbol , from_date, to_date, expiry_date, instrument_type=instrument, 
+                                option_type=option_type, strike_price=strike_price, output="/tmp/x.csv")
+        with open(j) as fp:
+            r = list(csv.reader(fp))
+            assert r[0][0] == "DATE" 
+            #assert r[1][0] == to_date.strftime("%d-%b-%Y")
+            assert r[-1][0] == from_date.strftime("%d-%b-%Y")
+            assert r[-1][1] == expiry_date.strftime("%d-%b-%Y")
+            assert r[-1][2] == "CE" 
+            assert r[-1][3] == "10000.00"
+            assert r[-1][4] == "219.90"
+            #assert r[1][4] == "469.05"
 
+        symbol = "SBIN"
+        instrument = "OPTSTK"
+        strike_price = 190
+        option_type = "CE"
+        j = nse.derivatives_csv(symbol , from_date, to_date, expiry_date, instrument_type=instrument, 
+                                option_type=option_type, strike_price=strike_price, output="/tmp/x.csv")
+        with open(j) as fp:
+            r = list(csv.reader(fp))
+            assert r[0][0] == "DATE" 
+            #assert r[1][0] == to_date.strftime("%d-%b-%Y")
+            assert r[-1][0] == from_date.strftime("%d-%b-%Y")
+            assert r[-1][1] == expiry_date.strftime("%d-%b-%Y")
+            assert r[-1][2] == "CE" 
+            assert r[-1][3] == "190.00"
+            assert r[-1][4] == "6.05"
+            #assert r[1][4] == "469.05"
+        warnings.warn("Test is work in progress because NSE's new website does not provide correct Derivatives data")
+    
+    def test_futures_df(self):
+        symbol = "NIFTY"
+        from_date = date(2020, 6, 1)
+        to_date = date(2020, 7, 30) 
+        expiry_date = to_date
+        instrument = "FUTIDX"
+        j = nse.derivatives_df(symbol , from_date, to_date, expiry_date, instrument_type=instrument)
+        assert j.columns[0] == "DATE" 
+        assert j["DATE"].iloc[0] == to_date
+        assert j["DATE"].iloc[-1] == from_date
+        assert j["OPEN"].iloc[-1] == 9626.85
+        assert j["OPEN"].iloc[0] == 11253.65
+        symbol = "SBIN"
+        instrument = "FUTSTK"
+        j = nse.derivatives_df(symbol , from_date, to_date, expiry_date, instrument_type=instrument)
+        assert j.columns[0] == "DATE" 
+        assert j["DATE"].iloc[0] == to_date
+        assert j["DATE"].iloc[-1] == from_date
+        assert j["OPEN"].iloc[-1] == 162.65
+        assert j["OPEN"].iloc[0] == 192.85
+    
 

@@ -38,7 +38,11 @@ def np_date(dt):
     try:
         return np.datetime64(dt)
     except:
-        return np.datetime64('nat') 
+        try:
+            dt = datetime.datetime.strptime(dt, "%d-%b-%Y").date()
+            return np.datetime64(dt)
+        except:
+            return np.datetime64('nat') 
 
     
 @np_exception
