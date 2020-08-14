@@ -193,7 +193,7 @@ class TestDerivatives(TestCase):
         assert j[0]['FH_INSTRUMENT'] == instrument
         assert j[0]['FH_LAST_TRADED_PRICE'] == '2.60'
         assert j[0]['FH_OPTION_TYPE'] == "CE"
-        warnings.warn("Test is work in progress because NSE's new website does not provide Derivatives correct data")
+        warnings.warn("Test is work in progress because NSE's new website does not provide correct Derivatives data")
 
     def test__index_futures(self):
         """ Test stock futures at _derivative level ie without _pool"""
@@ -338,4 +338,31 @@ class TestDerivatives(TestCase):
         assert j["OPEN"].iloc[-1] == 162.65
         assert j["OPEN"].iloc[0] == 192.85
     
-
+    def test_options_df(self):
+        symbol = "NIFTY"
+        from_date = date(2020, 6, 1)
+        to_date = date(2020, 7, 30) 
+        expiry_date = to_date
+        instrument = "OPTIDX"
+        strike_price = 10000.0
+        option_type = "CE"
+        j = nse.derivatives_df(symbol , from_date, to_date, expiry_date, instrument_type=instrument,
+                                strike_price=strike_price, option_type=option_type)
+        assert j.columns[0] == "DATE" 
+        # assert j["DATE"].iloc[0] == to_date
+        assert j["DATE"].iloc[-1] == from_date
+        assert j["OPEN"].iloc[-1] == 219.90
+        #assert j["OPEN"].iloc[0] == 1250.8
+        
+        symbol = "SBIN"
+        instrument = "OPTSTK"
+        strike_price = 190.0
+        option_type = "PE"
+        j = nse.derivatives_df(symbol , from_date, to_date, expiry_date, instrument_type=instrument,
+                                strike_price=strike_price, option_type=option_type)
+        print(j.iloc[0])
+        assert j.columns[0] == "DATE" 
+        assert j["DATE"].iloc[0] == to_date
+        assert j["DATE"].iloc[-1] == from_date
+        assert j["LTP"].iloc[-1] == 32.95
+        assert j["OPEN"].iloc[0] == 0.75 
