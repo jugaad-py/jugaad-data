@@ -222,8 +222,17 @@ def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, st
 def derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None):
     if not pd:
         raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
-    raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None)
+    raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, 
+                            strike_price=strike_price, option_type=option_type)
     futures_dtype = [  ut.np_date, ut.np_date, 
+                ut.np_float, ut.np_float,
+                ut.np_float, ut.np_float,
+                ut.np_float, ut.np_float,
+                ut.np_int, ut.np_int,
+                ut.np_float, ut.np_float, ut.np_float,
+                str]
+    
+    options_dtype = [  ut.np_date, ut.np_date, str, ut.np_float,
                 ut.np_float, ut.np_float,
                 ut.np_float, ut.np_float,
                 ut.np_float, ut.np_float,
@@ -238,6 +247,7 @@ def derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type, str
     if "OPT" in instrument_type:
         final_headers = options_final_headers
         select_headers = options_select_headers
+        dtypes = options_dtype
     df = pd.DataFrame(raw)[select_headers]
     df.columns = final_headers
     for i, h in enumerate(final_headers):

@@ -52,4 +52,4 @@ class TestCli(TestCase):
             assert rows[1][0] == to
             assert rows[-1][0] == from_
             assert len(rows) > 200 and len(rows) < 260
-        
+    
