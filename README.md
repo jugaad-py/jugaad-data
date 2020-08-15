@@ -18,15 +18,17 @@
 | Exchange | Segment    | Supported? |
 |----------|------------|------------|
 | NSE      | Stocks     | Yes        |
-| NSE      | Stocks F&O | Planned    |
+| NSE      | Stocks F&O | Yes        |
 | NSE      | Index      | Planned    |
-| NSE      | Index F&O  | Planned    |
+| NSE      | Index F&O  | Yes        |
 
 # Installation
 
 `pip install git+https://github.com/jugaad-py/jugaad-data.git`
 
 # Getting started
+
+## Download historical stock data
 
 ```
 $ jdata stock --help
@@ -53,8 +55,45 @@ SBIN  [####################################]  100%
 Saved file to : SBIN-Jan.csv
 ```
 
+## Download historical derivatives (F&O) data
 
-# Documentation
+```
+$ jdata deriviatives --help
+Usage: cli.py derivatives [OPTIONS]
+
+  Sample usage-
+
+  Download stock futures-
+
+  jdata derivatives -s SBIN -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i FUTSTK -o file_name.csv
+
+  Download index futures-
+
+  jdata derivatives -s NIFTY -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i FUTIDX -o file_name.csv
+
+  Download stock options-
+
+  jdata derivatives -s SBIN -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i OPTSTK -p 330 --ce -o file_name.csv
+
+  Download index options-
+
+  jdata derivatives -s NIFTY -f 2020-01-01 -t 2020-01-30 -e 2020-01-23 -i OPTIDX -p 11000 --pe -o file_name.csv
+
+Options:
+  -s, --symbol TEXT  Stock/Index symbol  [required]
+  -f, --from TEXT    From date - yyyy-mm-dd  [required]
+  -t, --to TEXT      To date - yyyy-mm-dd  [required]
+  -e, --expiry TEXT  Expiry date - yyyy-mm-dd  [required]
+  -i, --instru TEXT  FUTSTK - Stock futures, FUTIDX - Index Futures, OPTSTK -
+                     Stock Options, OPTIDX - Index Options  [required]
+
+  -p, --price TEXT   Strike price (Only for OPTSTK and OPTIDX)
+  --ce / --pe        --ce for call and --pe for put (Only for OPTSTK and
+                     OPTIDX)
+
+  -o, --output TEXT  Full path of output file
+  --help             Show this message and exit.
+```
 
 Visit https://marketsetup.in/documentation/jugaad-data/ for detailed documentation.
 
