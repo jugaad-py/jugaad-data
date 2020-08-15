@@ -187,7 +187,7 @@ options_final_headers = [   "DATE", "EXPIRY", "OPTION TYPE", "STRIKE PRICE",
                     "PREMIUM VALUE", "OPEN INTEREST", "CHANGE IN OI",
                      "SYMBOL"]
 
-def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None, output="", show_progress=True):
+def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, strike_price=None, option_type=None, output="", show_progress=False):
     if show_progress:
         h = NSEHistory()
         h.show_progress = show_progress
@@ -200,8 +200,7 @@ def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, st
                 chunks.append(r)
             raw = list(itertools.chain.from_iterable(chunks))
     else:
-        raw = h.derivatives_raw(symbol, from_date, to_date, series)
-
+        raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, strike_price, option_type)
     if not output:
         output = "{}-{}-{}-{}.csv".format(symbol, from_date, to_date, series)
     if "FUT" in instrument_type:
