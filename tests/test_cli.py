@@ -1,6 +1,7 @@
-from pyfakefs.fake_filesystem_unittest import TestCase
+import warnings
 import csv
 from click.testing import CliRunner
+from pyfakefs.fake_filesystem_unittest import TestCase
 from appdirs import user_cache_dir
 from jugaad_data.cli import cli
 
@@ -72,4 +73,4 @@ class TestCli(TestCase):
             reader = csv.reader(fp)
             rows = list(reader)
             assert rows[1][0] == "23-Jan-2020"
-        warning.warn("Test cannot be completed, NSE's website is providing only partial data") 
+        warnings.warn("Test cannot be completed, NSE's website is providing only partial data") 
