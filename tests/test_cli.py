@@ -52,4 +52,24 @@ class TestCli(TestCase):
             assert rows[1][0] == to
             assert rows[-1][0] == from_
             assert len(rows) > 200 and len(rows) < 260
-    
+     
+    def test_derivatives_cli(self):
+        runner = CliRunner()
+        output = "file_name.csv"
+        cmd = "derivatives -s SBIN -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i FUTSTK -o file_name.csv"
+        result = runner.invoke(cli, cmd.split())
+        assert result.exit_code == 0
+        with open(output) as fp:
+            reader = csv.reader(fp)
+            rows = list(reader)
+            assert rows[1][0] == "30-Jan-2020"
+            assert rows[-1][0] == "01-JAN-2020"
+            assert len(rows) == 23 
+        cmd = "derivatives -s NIFTY -f 2020-01-01 -t 2020-01-23 -e 2020-01-23 -i OPTIDX --pe -p 12000 -o file_name.csv"
+        result = runner.invoke(cli, cmd.split())
+        assert result.exit_code == 0
+        with open(output) as fp:
+            reader = csv.reader(fp)
+            rows = list(reader)
+            assert rows[1][0] == "23-Jan-2020"
+       warning.warn("Test cannot be completed, NSE's website is providing only partial data") 
