@@ -11,11 +11,11 @@ def cli():
     """  
 
 @cli.command("stock")
-@click.option("--symbol", "-s", required=True)
-@click.option("--from", "-f", "from_", required=True)
-@click.option("--to", "-t", required=True)
-@click.option("--series", "-S", default="EQ", show_default=True)
-@click.option("--output", "-o", default="")
+@click.option("--symbol", "-s", required=True, help="Stock symbol")
+@click.option("--from", "-f", "from_", required=True, help="From date - yyyy-mm-dd")
+@click.option("--to", "-t", required=True, help="From date - yyyy-mm-dd")
+@click.option("--series", "-S", default="EQ", show_default=True, help="Series - EQ, BE etc.")
+@click.option("--output", "-o", default="", help="Full path for output file")
 def stock(symbol, from_, to, series, output):
     """Download historical stock data 
     
@@ -34,14 +34,14 @@ def stock(symbol, from_, to, series, output):
     
     
 @cli.command("derivatives")
-@click.option("--symbol", "-s", required=True)
-@click.option("--from", "-f", "from_", required=True)
-@click.option("--to", "-t", required=True)
-@click.option("--expiry", "-e", required=True)
-@click.option("--instru", "-i", required=True)
-@click.option("--price", "-p")
-@click.option("--ce/--pe")
-@click.option("--output", "-o", default="")
+@click.option("--symbol", "-s", required=True, help="Stock/Index symbol")
+@click.option("--from", "-f", "from_", required=True, help="From date - yyyy-mm-dd")
+@click.option("--to", "-t", required=True, help="To date - yyyy-mm-dd")
+@click.option("--expiry", "-e", required=True, help="Expiry date - yyyy-mm-dd")
+@click.option("--instru", "-i", required=True, help="""FUTSTK - Stock futures, FUTIDX - Index Futures,\tOPTSTK - Stock Options, OPTIDX - Index Options""")
+@click.option("--price", "-p", help="Strike price (Only for OPTSTK and OPTIDX)")
+@click.option("--ce/--pe", help="--ce for call and --pe for put (Only for OPTSTK and OPTIDX)")
+@click.option("--output", "-o", default="", help="Full path of output file")
 def stock(symbol, from_, to, expiry, instru, price, ce, output):
     """Sample usage-
 
@@ -58,9 +58,9 @@ def stock(symbol, from_, to, expiry, instru, price, ce, output):
     Download stock options-
 
     \b
-    jdata derivatives -s SBIN -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i OPTSTK -p 200 --ce -o file_name.csv
+    jdata derivatives -s SBIN -f 2020-01-01 -t 2020-01-30 -e 2020-01-30 -i OPTSTK -p 330 --ce -o file_name.csv
 
-    Download stock options-
+    Download index options-
 
     \b
     jdata derivatives -s NIFTY -f 2020-01-01 -t 2020-01-30 -e 2020-01-23 -i OPTIDX -p 11000 --pe -o file_name.csv
@@ -83,7 +83,7 @@ def stock(symbol, from_, to, expiry, instru, price, ce, output):
     else:
         ot = None
     o = nse.derivatives_csv(symbol, from_date, to_date, expiry, instru, price, ot, 
-                                output)
+                                output, show_progress=True)
 
     click.echo("\nSaved file to : {}".format(o))
  
