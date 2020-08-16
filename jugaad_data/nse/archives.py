@@ -27,6 +27,7 @@ class NSEArchives:
           yy - 19, 20
         yyyy - 2020, 2030
     """
+    timeout = 5 
     s = requests.Session()
     h = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
@@ -45,7 +46,7 @@ class NSEArchives:
     
     def get(self, rout, **params):
         url = self.base_url + self._routes[rout].format(**params)
-        self.r = self.s.get(url)
+        self.r = self.s.get(url, timeout=self.timeout)
         return self.r
     
     @unzip
@@ -96,6 +97,13 @@ full_bhavcopy_save = a.full_bhavcopy_save
 
 
 
+if __name__ == "__main__":
+
+    url = "https://archives.nseindia.com/content/historical/EQUITIES/2020/AUG/cm12AUG2020bhav.csv.zip"
+    d = requests.get(url, stream=True, timeout=1)
+    for chunk in d.iter_content(chunk_size=1024):
+        print("Received")
+        print(len(chunk))
 
 
 
