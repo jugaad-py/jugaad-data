@@ -14,7 +14,7 @@ except:
     pd = None
 
 from jugaad_data import util as ut
-
+from .archives import bhavcopy_raw, bhavcopy_save, full_bhavcopy_raw, full_bhavcopy_save
 
 APP_NAME = "nsehistory"
 class NSEHistory:
