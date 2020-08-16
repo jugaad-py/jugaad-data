@@ -1,3 +1,7 @@
+# Documentation
+
+https://marketsetup.in/documentation/jugaad-data/
+
 # Introduction
 
 `jugaad-data` helps you download historical stock data.
@@ -95,5 +99,4 @@ Options:
   --help             Show this message and exit.
 ```
 
-Visit https://marketsetup.in/documentation/jugaad-data/ for detailed documentation.
 
