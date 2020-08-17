@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import os
 import io
 import csv
 import zipfile
@@ -27,7 +28,7 @@ class NSEArchives:
           yy - 19, 20
         yyyy - 2020, 2030
     """
-    timeout = 5 
+    timeout = 1 
     s = requests.Session()
     h = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
@@ -58,11 +59,16 @@ class NSEArchives:
         r = self.get("bhavcopy", yyyy=yyyy, MMM=MMM, dd=dd)
         return r.content
     
-    def bhavcopy_save(self, dt, fname):
+    def bhavcopy_save(self, dt, dest, skip_if_present=True):
         """Downloads and saves raw bhavcopy csv file for a specific date"""
+        fmt = "cm%d%b%Ybhav.csv"
+        fname = os.path.join(dest, dt.strftime(fmt))
+        if os.path.isfile(fname) and skip_if_present:
+            return fname
         text = self.bhavcopy_raw(dt)
         with open(fname, 'w') as fp:
             fp.write(text)
+            return fname
 
     def full_bhavcopy_raw(self, dt):
         """Downloads full raw bhavcopy text for a specific date"""
@@ -73,7 +79,11 @@ class NSEArchives:
         r = self.get("bhavcopy_full", yyyy=yyyy, mm=mm, dd=dd)
         return r.text
 
-    def full_bhavcopy_save(self, dt, fname):
+    def full_bhavcopy_save(self, dt, dest):
+        fmt = "sec_bhavdata_full_%d%b%Ybhav.csv"
+        fname = os.path.join(dest, dt.strftime(fmt))
+        if os.path.isfile(fname):
+            return fname
         text = self.full_bhavcopy_raw(dt)
         with open(fname, 'w') as fp:
             fp.write(text)
