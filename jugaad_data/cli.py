@@ -13,11 +13,20 @@ def cli():
         
     """  
 
+def bhavcopy_wrapper(bhavcopy_function, dt, dest):
+    try:
+        bhavcopy_function(dt, dest)
+        return True
+    except:
+        return False
+    
+
+
 @cli.command("bhavcopy")
-@click.option("--dir", "-d", help="Directory path", required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True))
+@click.option("--dest", "-d", help="Destination directory path", required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.option("--from", "-f", "from_", help="From date", type=click.DateTime(["%Y-%m-%d"])) 
 @click.option("--to", "-t", help="To date", type=click.DateTime(["%Y-%m-%d"]))
-def bhavcopy(from_, to, dir):
+def bhavcopy(from_, to, dest):
     """Downloads bhavcopy from NSE's website
         
         Download today's bhavcopy
@@ -33,12 +42,10 @@ def bhavcopy(from_, to, dir):
         $ jdata bhavcopy -d /path/to/dir -f 2020-01-01 -t 2020-02-01
         
     """ 
-    fmt = "cm%d%b%Ybhav.csv"
     if not from_:
         dt = date.today()
-        path = os.path.join(dir, dt.strftime(fmt))
         try:
-            nse.bhavcopy_save(dt, path)
+            path = nse.bhavcopy_save(dt, dest)
             click.echo("Saved to : " + path)  
         except requests.exceptions.ReadTimeout:
             click.echo("""Error: Timeout while downloading, This may be due to-
@@ -48,9 +55,8 @@ def bhavcopy(from_, to, dir):
     if from_ and not to:
         # if from_ provided but not to
         dt = from_.date()
-        path = os.path.join(dir, dt.strftime(fmt))
         try:
-            nse.bhavcopy_save(dt, path)
+            path = nse.bhavcopy_save(dt, dest)
             click.echo("Saved to : " + path)  
         except requests.exceptions.ReadTimeout:
             click.echo("""Error: Timeout while downloading, This may be due to-
@@ -66,15 +72,25 @@ def bhavcopy(from_, to, dir):
             w = dt.weekday()
             if w not in [5,6]:
                 date_range.append(dt.date())
-
-        with click.progressbar(date_range, label="Downloading Bhavcopies") as bar:
+        
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(bhavcopy_wrapper, nse.bhavcopy_save, dt, dest) for dt in date_range]
+            
+            with click.progressbar(futures, label="Downloading Bhavcopies") as bar:
+                for i, future in enumerate(bar):
+                    result = future.result()
+                    if not result:
+                        failed_downloads.append(date_range[i])
+        
+             
+        """
             for dt in bar:
                 try:
-                    path = os.path.join(dir, dt.strftime(fmt))
-                    nse.bhavcopy_save(dt, path)    
+                    nse.bhavcopy_save(dt, dest)    
                 except requests.exceptions.ReadTimeout:
                     failed_downloads.append(dt)
-        click.echo("Saved to : " + dir)
+        """
+        click.echo("Saved to : " + dest)
         if failed_downloads:
             click.echo("Failed to download for below dates, these might be holidays, please check -") 
             for dt in failed_downloads:
