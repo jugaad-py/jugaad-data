@@ -15,7 +15,7 @@ with open("jugaad_data/__init__.py", encoding="utf8") as f:
 setuptools.setup(
     name="jugaad-data", # Replace with your own username
     version=version,
-    description="Jugad data is a library to download historical stocck data",
+    description="Jugad data is a library to download historical stock data",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://marketsetup.in/documentation/jugaad-data/",
