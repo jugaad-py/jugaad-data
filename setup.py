@@ -13,7 +13,7 @@ with open("jugaad_data/__init__.py", encoding="utf8") as f:
 
 
 setuptools.setup(
-    name="Jugaad Data", # Replace with your own username
+    name="jugaad-data", # Replace with your own username
     version=version,
     description="Jugad data is a library to download historical stocck data",
     long_description=long_description,
