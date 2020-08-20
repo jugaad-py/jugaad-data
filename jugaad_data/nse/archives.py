@@ -88,6 +88,7 @@ class NSEArchives:
         text = self.full_bhavcopy_raw(dt)
         with open(fname, 'w') as fp:
             fp.write(text)
+        return fname
 
     def bulk_deals_raw(self):
         r = self.get("bulk_deals")
