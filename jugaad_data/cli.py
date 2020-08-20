@@ -26,7 +26,9 @@ def bhavcopy_wrapper(bhavcopy_function, dt, dest):
 @click.option("--dest", "-d", help="Destination directory path", required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True))
 @click.option("--from", "-f", "from_", help="From date", type=click.DateTime(["%Y-%m-%d"])) 
 @click.option("--to", "-t", help="To date", type=click.DateTime(["%Y-%m-%d"]))
-def bhavcopy(from_, to, dest):
+@click.option("--fo/--no-fo", help="Downloads F&O bhavcopy", default=False, type=bool)
+@click.option("--full/--no-full", help="Full Bhavcopy", default=False, type=bool)
+def bhavcopy(from_, to, dest, fo, full):
     """Downloads bhavcopy from NSE's website
         
         Download today's bhavcopy
@@ -42,10 +44,17 @@ def bhavcopy(from_, to, dest):
         $ jdata bhavcopy -d /path/to/dir -f 2020-01-01 -t 2020-02-01
         
     """ 
+        
+    downloader = nse.bhavcopy_save
+    if full:
+        downloader = nse.full_bhavcopy_save
+    if fo:
+        downloader = nse.bhavcopy_fo_save
+        
     if not from_:
         dt = date.today()
         try:
-            path = nse.bhavcopy_save(dt, dest)
+            path = downloader(dt, dest)
             click.echo("Saved to : " + path)  
         except requests.exceptions.ReadTimeout:
             click.echo("""Error: Timeout while downloading, This may be due to-
@@ -56,7 +65,7 @@ def bhavcopy(from_, to, dest):
         # if from_ provided but not to
         dt = from_.date()
         try:
-            path = nse.bhavcopy_save(dt, dest)
+            path = downloader(dt, dest)
             click.echo("Saved to : " + path)  
         except requests.exceptions.ReadTimeout:
             click.echo("""Error: Timeout while downloading, This may be due to-
@@ -74,7 +83,7 @@ def bhavcopy(from_, to, dest):
                 date_range.append(dt.date())
         
         with ThreadPoolExecutor() as executor:
-            futures = [executor.submit(bhavcopy_wrapper, nse.bhavcopy_save, dt, dest) for dt in date_range]
+            futures = [executor.submit(bhavcopy_wrapper, downloader, dt, dest) for dt in date_range]
             
             with click.progressbar(futures, label="Downloading Bhavcopies") as bar:
                 for i, future in enumerate(bar):

@@ -41,7 +41,8 @@ class NSEArchives:
     _routes = {
             "bhavcopy": "/content/historical/EQUITIES/{yyyy}/{MMM}/cm{dd}{MMM}{yyyy}bhav.csv.zip",
             "bhavcopy_full": "/products/content/sec_bhavdata_full_{dd}{mm}{yyyy}.csv",
-            "bulk_deals": "/content/equities/bulk.csv"
+            "bulk_deals": "/content/equities/bulk.csv",
+            "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip"
         }
     
     
@@ -97,11 +98,34 @@ class NSEArchives:
         with open(fname, 'w') as fp:
             fp.write(text)
 
+    @unzip
+    def bhavcopy_fo_raw(self, dt):
+        """Downloads raw bhavcopy text for a specific date"""
+        dd = dt.strftime('%d')
+        MMM = dt.strftime('%b').upper()
+        yyyy = dt.year
+        r = self.get("bhavcopy_fo", yyyy=yyyy, MMM=MMM, dd=dd)
+        return r.content
+    
+    def bhavcopy_fo_save(self, dt, dest):
+        """ Saves Derivatives Bhavcopy to a directory """
+        fmt = "fo%d%b%Ybhav.csv"
+        fname = os.path.join(dest, dt.strftime(fmt))
+        if os.path.isfile(fname) and skip_if_present:
+            return fname
+        text = self.bhavcopy_fo_raw(dt)
+        with open(fname, 'w') as fp:
+            fp.write(text)
+            return fname
+
+
 a = NSEArchives()
 bhavcopy_raw = a.bhavcopy_raw
 bhavcopy_save = a.bhavcopy_save
 full_bhavcopy_raw = a.full_bhavcopy_raw
 full_bhavcopy_save = a.full_bhavcopy_save
+bhavcopy_fo_raw = a.bhavcopy_fo_raw
+bhavcopy_fo_save = a.bhavcopy_fo_save
 
 
 
