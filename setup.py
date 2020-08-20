@@ -10,7 +10,7 @@ with open("requirements.txt", "r") as fh:
 
 with open("jugaad_data/__init__.py", encoding="utf8") as f:
     version = re.search(r'__version__ = "(.*?)"', f.read()).group(1)
-
+print(version)
 
 setuptools.setup(
     name="jugaad-data", # Replace with your own username
