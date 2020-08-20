@@ -28,7 +28,7 @@ class NSEArchives:
           yy - 19, 20
         yyyy - 2020, 2030
     """
-    timeout = 1 
+    timeout = 4 
     s = requests.Session()
     h = {
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
