@@ -80,9 +80,11 @@ class NSEArchives:
         r = self.get("bhavcopy_full", yyyy=yyyy, mm=mm, dd=dd)
         return r.text
 
-    def full_bhavcopy_save(self, dt, dest):
+    def full_bhavcopy_save(self, dt, dest, skip_if_present=True):
         fmt = "sec_bhavdata_full_%d%b%Ybhav.csv"
         fname = os.path.join(dest, dt.strftime(fmt))
+        if os.path.isfile(fname) and skip_if_present:
+            return fname
         if os.path.isfile(fname):
             return fname
         text = self.full_bhavcopy_raw(dt)
