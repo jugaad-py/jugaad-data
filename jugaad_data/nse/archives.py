@@ -110,7 +110,7 @@ class NSEArchives:
         r = self.get("bhavcopy_fo", yyyy=yyyy, MMM=MMM, dd=dd)
         return r.content
     
-    def bhavcopy_fo_save(self, dt, dest):
+    def bhavcopy_fo_save(self, dt, dest, skip_if_present):
         """ Saves Derivatives Bhavcopy to a directory """
         fmt = "fo%d%b%Ybhav.csv"
         fname = os.path.join(dest, dt.strftime(fmt))
