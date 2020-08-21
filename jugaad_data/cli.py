@@ -27,8 +27,9 @@ def bhavcopy_wrapper(bhavcopy_function, dt, dest):
 @click.option("--from", "-f", "from_", help="From date", type=click.DateTime(["%Y-%m-%d"])) 
 @click.option("--to", "-t", help="To date", type=click.DateTime(["%Y-%m-%d"]))
 @click.option("--fo/--no-fo", help="Downloads F&O bhavcopy", default=False, type=bool)
+@click.option("--idx/--no-idx", help="Downloads Index bhavcopy", default=False, type=bool)
 @click.option("--full/--no-full", help="Full Bhavcopy", default=False, type=bool)
-def bhavcopy(from_, to, dest, fo, full):
+def bhavcopy(from_, to, dest, fo, idx, full):
     """Downloads bhavcopy from NSE's website
         
         Download today's bhavcopy
@@ -48,6 +49,8 @@ def bhavcopy(from_, to, dest, fo, full):
     downloader = nse.bhavcopy_save
     if full:
         downloader = nse.full_bhavcopy_save
+    if idx:
+        downloader = nse.bhavcopy_index_save
     if fo:
         downloader = nse.bhavcopy_fo_save
         
