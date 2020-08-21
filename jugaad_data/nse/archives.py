@@ -4,7 +4,7 @@ import io
 import csv
 import zipfile
 import requests
-
+import pprint
 def unzip(function):
     
     def unzipper(*args, **kwargs):
@@ -29,26 +29,31 @@ class NSEArchives:
         yyyy - 2020, 2030
     """
     timeout = 4 
-    s = requests.Session()
-    h = {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
-        "accept-encoding": "gzip, deflate, br",
-        "accept":
-"""text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9""",
+       
+    def __init__(self):
+        self.s = requests.Session()
+        h = {
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36",
+            "accept-encoding": "gzip, deflate, br",
+            "accept":
+    """text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9""",
+          
+    }
+        self.s.headers.update(h)
+        self._routes = {
+                "bhavcopy": "/content/historical/EQUITIES/{yyyy}/{MMM}/cm{dd}{MMM}{yyyy}bhav.csv.zip",
+                "bhavcopy_full": "/products/content/sec_bhavdata_full_{dd}{mm}{yyyy}.csv",
+                "bulk_deals": "/content/equities/bulk.csv",
+                "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip"
+            }
         
-}
-    s.headers.update(h)
-    _routes = {
-            "bhavcopy": "/content/historical/EQUITIES/{yyyy}/{MMM}/cm{dd}{MMM}{yyyy}bhav.csv.zip",
-            "bhavcopy_full": "/products/content/sec_bhavdata_full_{dd}{mm}{yyyy}.csv",
-            "bulk_deals": "/content/equities/bulk.csv",
-            "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip"
-        }
-    
-    
     def get(self, rout, **params):
         url = self.base_url + self._routes[rout].format(**params)
         self.r = self.s.get(url, timeout=self.timeout)
+        print(url)
+        print(self.base_url)
+        print(self.r.request.headers)
+        print(self.r.text[0:30])
         return self.r
     
     @unzip
@@ -122,14 +127,16 @@ class NSEArchives:
         return fname
 
 class NSEIndicesArchives(NSEArchives):
-    base_url = "https://www.niftyindices.com"
-    _routes = { 
+    def __init__(self):
+        super().__init__()
+        self.base_url = "https://www.niftyindices.com"
+        self._routes = { 
                 "bhavcopy": "/Daily_Snapshot/ind_close_all_{dd}{mm}{yyyy}.csv"
         }
-    h = {
+        self.h = {
         "Host": "www.niftyindices.com",
         "Referer": "https://www.nseindia.com",
-       "X-Requested-With": "XMLHttpRequest",
+        "X-Requested-With": "XMLHttpRequest",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
        "Accept": "*/*",
        "Accept-Encoding": "gzip, deflate, br",
@@ -138,7 +145,6 @@ class NSEIndicesArchives(NSEArchives):
        "Connection": "keep-alive",
     }
 
-    def __init__(self):
         self.s.headers.update(self.h)
 
     def bhavcopy_index_raw(self, dt):
@@ -160,7 +166,6 @@ class NSEIndicesArchives(NSEArchives):
             fp.write(text)
         return fname
 
-
 a = NSEArchives()
 bhavcopy_raw = a.bhavcopy_raw
 bhavcopy_save = a.bhavcopy_save
@@ -168,9 +173,9 @@ full_bhavcopy_raw = a.full_bhavcopy_raw
 full_bhavcopy_save = a.full_bhavcopy_save
 bhavcopy_fo_raw = a.bhavcopy_fo_raw
 bhavcopy_fo_save = a.bhavcopy_fo_save
-a = NSEIndicesArchives()
-bhavcopy_index_raw = a.bhavcopy_index_raw
-bhavcopy_index_save = a.bhavcopy_index_save
+ia = NSEIndicesArchives()
+bhavcopy_index_raw = ia.bhavcopy_index_raw
+bhavcopy_index_save = ia.bhavcopy_index_save
 
 
 
@@ -182,7 +187,7 @@ if __name__ == "__main__":
         "Host": "www.niftyindices.com",
         "Referer": "https://www.nseindia.com",
        "X-Requested-With": "XMLHttpRequest",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36",
        "Accept": "*/*",
        "Accept-Encoding": "gzip, deflate, br",
        "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
