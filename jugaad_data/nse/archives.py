@@ -50,10 +50,6 @@ class NSEArchives:
     def get(self, rout, **params):
         url = self.base_url + self._routes[rout].format(**params)
         self.r = self.s.get(url, timeout=self.timeout)
-        print(url)
-        print(self.base_url)
-        print(self.r.request.headers)
-        print(self.r.text[0:30])
         return self.r
     
     @unzip
