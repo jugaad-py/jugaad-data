@@ -21,28 +21,29 @@ from .archives import (bhavcopy_raw, bhavcopy_save,
 
 APP_NAME = "nsehistory"
 class NSEHistory:
-    headers = {
-        "Host": "www.nseindia.com",
-        "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
-        "X-Requested-With": "XMLHttpRequest",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
-        "Accept": "*/*",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-        }
-    path_map = {
-        "stock_history": "/api/historical/cm/equity",
-        "derivatives": "https://www.nseindia.com/api/historical/fo/derivatives",
-    }
-    base_url = "https://www.nseindia.com"
-    cache_dir = ".cache"
-    workers = 2
-    use_threads = True
-    show_progress = False
-
     def __init__(self):
+        
+        self.headers = {
+            "Host": "www.nseindia.com",
+            "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
+            "X-Requested-With": "XMLHttpRequest",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            }
+        self.path_map = {
+            "stock_history": "/api/historical/cm/equity",
+            "derivatives": "/api/historical/fo/derivatives",
+        }
+        self.base_url = "https://www.nseindia.com"
+        self.cache_dir = ".cache"
+        self.workers = 2
+        self.use_threads = True
+        self.show_progress = False
+
         self.s = Session()
         self.s.headers.update(self.headers)
         self.ssl_verify = True
@@ -102,7 +103,8 @@ class NSEHistory:
         params = [(symbol, x[0], x[1], expiry_date, instrument_type, strike_price, option_type) for x in reversed(date_ranges)]
         chunks = ut.pool(self._derivatives, params)
         return list(itertools.chain.from_iterable(chunks))
-        
+
+       
 
 h = NSEHistory()
 stock_raw = h.stock_raw
@@ -256,4 +258,92 @@ def derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type, str
         df[h] = df[h].apply(dtypes[i])
     return df
 
+class NSEIndexHistory(NSEHistory):
+    def __init__(self):
+        super().__init__()
+        self.headers = {
+            "Host": "niftyindices.com",
+            "Referer": "niftyindices.com",
+            "X-Requested-With": "XMLHttpRequest",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+            "Origin": "https://niftyindices.com",
+            "Accept": "*/*",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "Content-Type": "application/json; charset=UTF-8"
+            }
+        self.path_map = {
+            "index_history": "/Backpage.aspx/getHistoricaldatatabletoString",
+        }
+        self.base_url = "https://niftyindices.com"
+        self.s = Session()
+        self.s.headers.update(self.headers)
+        self.ssl_verify = True
+
+    def _post_json(self, path_name, params):
+        path = self.path_map[path_name]
+        url = urljoin(self.base_url, path)
+        self.r = self.s.post(url, json=params, verify=self.ssl_verify)
+        return self.r
+    
+    @ut.cached(APP_NAME + '-index')
+    def _index(self, symbol, from_date, to_date): 
+        params = {'name': symbol,
+                'startDate': from_date.strftime("%d-%b-%Y"),
+                'endDate': to_date.strftime("%d-%b-%Y")
+        }
+        r = self._post_json("index_history", params=params)
+        return json.loads(self.r.json()['d'])
+    
+    def index_raw(self, symbol, from_date, to_date):
+        date_ranges = ut.break_dates(from_date, to_date)
+        params = [(symbol, x[0], x[1]) for x in reversed(date_ranges)]
+        chunks = ut.pool(self._index, params)
+        return list(itertools.chain.from_iterable(chunks))
+
+
+ih = NSEIndexHistory()
+index_raw = ih.index_raw
+
+def index_csv(symbol, from_date, to_date, output="", show_progress=False):
+    if show_progress:
+        h = NSEIndexHistory()
+        date_ranges = ut.break_dates(from_date, to_date)
+        params = [(symbol, x[0], x[1]) for x in reversed(date_ranges)]
+        with click.progressbar(params, label=symbol) as ps:
+            chunks = []
+            for p in ps:
+                r = h._index(*p)
+                chunks.append(r)
+            raw = list(itertools.chain.from_iterable(chunks))
+    else:
+        raw = index_raw(symbol, from_date, to_date)
+    
+    if not output:
+        output = "{}-{}-{}.csv".format(symbol, from_date, to_date)
+    
+    if raw:
+        with open(output, 'w') as fp:
+            fieldnames = ["INDEX_NAME", "HistoricalDate", "OPEN", "HIGH", "LOW", "CLOSE"]
+            writer = csv.DictWriter(fp, fieldnames=fieldnames, extrasaction='ignore')
+            writer.writeheader()
+            writer.writerows(raw)
+    return output
+
+index_dtypes = [  str, str, ut.np_date,
+            ut.np_float, ut.np_float,
+            ut.np_float, ut.np_float,
+            ut.np_float, ut.np_float,
+            ut.np_float, ut.np_float, ut.np_float,
+            ut.np_int, ut.np_float, ut.np_int, str]
+def index_df(symbol, from_date, to_date):
+    if not pd:
+        raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
+    raw = index_raw(symbol, from_date, to_date)
+    df = pd.DataFrame(raw)
+    for i, h in enumerate(df.columns):
+        df[h] = df[h].apply(index_dtypes[i])
+    return df
 
