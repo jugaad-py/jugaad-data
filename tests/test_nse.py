@@ -416,7 +416,7 @@ class TestIndexHistory(TestCase):
             assert rows[1][2] == raw[0]['OPEN']
 
     def test_index_df(self):    
-        from_date = date(2001,1,15)
+        from_date = date(2001,3,15)
         to_date = date(2001,6,15)
         raw = nse.index_raw("NIFTY 50", from_date, to_date)
         df = nse.index_df("NIFTY 50", from_date, to_date)

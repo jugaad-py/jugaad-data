@@ -23,7 +23,7 @@ https://marketsetup.in/documentation/jugaad-data/
 |----------|------------|------------|
 | NSE      | Stocks     | Yes        |
 | NSE      | Stocks F&O | Yes        |
-| NSE      | Index      | Planned    |
+| NSE      | Index      | Yes    |
 | NSE      | Index F&O  | Yes        |
 
 # Installation
