@@ -76,20 +76,20 @@ class TestCli(TestCase):
         warnings.warn("Test cannot be completed, NSE's website is providing only partial data") 
 
     def test_index_cli(self):
-        symbol = "NIFTY 50"
+        symbol = "'NIFTY 50'"
         from_ = "2020-01-01"
         to = "2020-07-07"
         output = "/tmp/abc.csv"
         runner = CliRunner()
-        cmd = "index,-s,{},-f,{},-t,{},-o,{}".format(symbol, from_, to, output)
-        result = runner.invoke(cli, cmd.split(','))
-        print(cmd.split('.'))
+        cmd = "index -s {} -f {} -t {} -o {}".format(symbol, from_, to, output)
+        result = runner.invoke(cli, cmd.split())
+        print(cmd)
         print(result.output)
         assert result.exit_code == 0
         with open(output) as fp:
             reader = csv.reader(fp)
             rows = list(reader)
-            assert rows[1][1] == "07 Jul 2020"
-            assert rows[-1][1] == "01 Jan 2020"
-            assert len(rows) > 100
+            assert rows[1][0] == "07 Jul 2020"
+            assert rows[-1][0] == "01 Jan 2020"
+            assert len(rows) == 6
        

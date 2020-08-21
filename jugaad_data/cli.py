@@ -130,6 +130,26 @@ def stock(symbol, from_, to, series, output):
         traceback.print_exc()
     click.echo("\nSaved file to : {}".format(o))
     
+@cli.command("index")
+@click.option("--symbol", "-s", required=True, help="Stock symbol")
+@click.option("--from", "-f", "from_", required=True, help="From date - yyyy-mm-dd")
+@click.option("--to", "-t", required=True, help="From date - yyyy-mm-dd")
+@click.option("--output", "-o", default="", help="Full path for output file")
+def index(symbol, from_, to, output):
+    """Download historical index data 
+    
+
+    $jdata index --symbol "NIFTY 50" -f yyyy-mm-dd -t yyyy-mm-dd -o file_name.csv
+    """
+    import traceback
+    from_date = datetime.strptime(from_, "%Y-%m-%d").date()
+    to_date = datetime.strptime(to, "%Y-%m-%d").date()
+    try:
+        o = nse.index_csv(symbol, from_date, to_date, output, show_progress=True)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+    click.echo("\nSaved file to : {}".format(o))
     
 @cli.command("derivatives")
 @click.option("--symbol", "-s", required=True, help="Stock/Index symbol")
