@@ -78,7 +78,7 @@ class TestCli(TestCase):
     def test_index_cli(self):
         symbol = "NIFTY 50"
         from_ = "2020-01-01"
-        to = "2020-07-07"
+        to = "2020-03-31"
         output = "/tmp/abc.csv"
         runner = CliRunner()
         cmd = "index,-s,{},-f,{},-t,{},-o,{}".format(symbol, from_, to, output)
@@ -89,7 +89,7 @@ class TestCli(TestCase):
         with open(output) as fp:
             reader = csv.reader(fp)
             rows = list(reader)
-            assert rows[1][1] == "07 Jul 2020"
+            assert rows[1][1] == "31 Mar 2020"
             assert rows[-1][1] == "01 Jan 2020"
-            assert len(rows) > 100
+            assert len(rows) > 50
        
