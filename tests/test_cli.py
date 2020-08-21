@@ -78,6 +78,7 @@ class TestCli(TestCase):
     def test_index_cli(self):
         symbol = "NIFTY 50"
         from_ = "2020-01-01"
+
         to = "2020-03-31"
         output = "/tmp/abc.csv"
         runner = CliRunner()
