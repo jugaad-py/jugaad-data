@@ -119,7 +119,46 @@ class NSEArchives:
         text = self.bhavcopy_fo_raw(dt)
         with open(fname, 'w') as fp:
             fp.write(text)
+        return fname
+
+class NSEIndicesArchives(NSEArchives):
+    base_url = "https://www.niftyindices.com"
+    _routes = { 
+                "bhavcopy": "/Daily_Snapshot/ind_close_all_{dd}{mm}{yyyy}.csv"
+        }
+    h = {
+        "Host": "www.niftyindices.com",
+        "Referer": "https://www.nseindia.com",
+       "X-Requested-With": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+       "Accept": "*/*",
+       "Accept-Encoding": "gzip, deflate, br",
+       "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+       "Cache-Control": "no-cache",
+       "Connection": "keep-alive",
+    }
+
+    def __init__(self):
+        self.s.headers.update(self.h)
+
+    def bhavcopy_index_raw(self, dt):
+        """Downloads raw index bhavcopy text for a specific date"""
+        dd = dt.strftime('%d')
+        mm = dt.strftime('%m').upper()
+        yyyy = dt.year
+        r = self.get("bhavcopy", yyyy=yyyy, mm=mm, dd=dd)
+        return r.text
+   
+    def bhavcopy_index_save(self, dt, dest, skip_if_present=False):
+        """Downloads and saves index bhavcopy csv for a specific date"""
+        fmt = "ind_close_all_%d%m%Y.csv"
+        fname = os.path.join(dest, dt.strftime(fmt))
+        if os.path.isfile(fname) and skip_if_present:
             return fname
+        text = self.bhavcopy_index_raw(dt)
+        with open(fname, 'w') as fp:
+            fp.write(text)
+        return fname
 
 
 a = NSEArchives()
@@ -129,15 +168,28 @@ full_bhavcopy_raw = a.full_bhavcopy_raw
 full_bhavcopy_save = a.full_bhavcopy_save
 bhavcopy_fo_raw = a.bhavcopy_fo_raw
 bhavcopy_fo_save = a.bhavcopy_fo_save
-
+a = NSEIndicesArchives()
+bhavcopy_index_raw = a.bhavcopy_index_raw
+bhavcopy_index_save = a.bhavcopy_index_save
 
 
 
 
 if __name__ == "__main__":
 
-    url = "https://archives.nseindia.com/content/historical/EQUITIES/2020/AUG/cm12AUG2020bhav.csv.zip"
-    d = requests.get(url, stream=True, timeout=1)
+    url = "https://www.niftyindices.com/Daily_Snapshot/ind_close_all_20082020.csv"
+    headers = {
+        "Host": "www.niftyindices.com",
+        "Referer": "https://www.nseindia.com",
+       "X-Requested-With": "XMLHttpRequest",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+       "Accept": "*/*",
+       "Accept-Encoding": "gzip, deflate, br",
+       "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+       "Cache-Control": "no-cache",
+       "Connection": "keep-alive",
+       }
+    d = requests.get(url, stream=True, timeout=10, headers=headers, verify=False)
     for chunk in d.iter_content(chunk_size=1024):
         print("Received")
         print(len(chunk))

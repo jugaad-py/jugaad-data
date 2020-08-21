@@ -1,5 +1,5 @@
 from datetime import date
-from jugaad_data.nse import bhavcopy_raw, full_bhavcopy_raw, bhavcopy_fo_raw
+from jugaad_data.nse import bhavcopy_raw, full_bhavcopy_raw, bhavcopy_fo_raw, bhavcopy_index_raw
 
 
 def test_bhavcopy():
@@ -19,6 +19,13 @@ def test_bhavcopy_fo():
     header = "INSTRUMENT,SYMBOL,EXPIRY_DT,STRIKE_PR,OPTION_TYP,OPEN,HIGH,LOW,CLOSE,SETTLE_PR,CONTRACTS,VAL_INLAKH,OPEN_INT,CHG_IN_O"
     assert "SBIN" in r
     assert header in r
+
+def test_bhavcopy_index():
+    r = bhavcopy_index_raw(date(2020,1,1))
+    header = "Index Name,Index Date,Open Index Value,High Index Value,Low Index Value,Closing Index Value,Points Change,Change(%)"
+    assert "NIFTY" in r
+    assert header in r
+
 
 
 """
