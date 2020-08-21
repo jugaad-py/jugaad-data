@@ -36,6 +36,7 @@ def test_np_date():
     assert date(2020,1,1) == ut.np_date("2020-01-01")
     assert date(2020,7,30) == datetime.strptime("30-Jul-2020", "%d-%b-%Y").date()
     assert date(2020,7,30) == ut.np_date("30-Jul-2020")
+    assert ut.np_date("20 Aug 2020") == date(2020, 8, 20)
 
 def test_kw_to_fname():
     x = ut.kw_to_fname(self=[0], z='last', a='first')

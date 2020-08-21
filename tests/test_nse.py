@@ -366,3 +366,61 @@ class TestDerivatives(TestCase):
         assert j["DATE"].iloc[-1] == from_date
         assert j["LTP"].iloc[-1] == 32.95
         assert j["OPEN"].iloc[0] == 0.75 
+
+
+class TestIndexHistory(TestCase):
+    def setUp(self):
+        setup_test(self)
+    
+    def test__post(self):
+        h = nse.NSEIndexHistory()
+        h.base_url = "https://httpbin.org"
+        h.path_map['mypath'] = '/post'
+        params = {'a': 'b'}
+        r = h._post_json("mypath", params=params)
+        assert json.loads(r.json()['data']) == params
+    
+    def test_index(self):
+        h = nse.NSEIndexHistory()
+        symbol = "NIFTY 50"
+        from_date = date(2020, 6, 1)
+        to_date = date(2020, 7, 30) 
+        d = h._index(symbol, from_date, to_date)
+        assert d[0]['Index Name'] == 'Nifty 50'
+        assert d[0]['HistoricalDate'] == '30 Jul 2020'
+        assert d[-1]['HistoricalDate'] == '01 Jun 2020'
+        app_name = nse.APP_NAME + '-index'
+        files = os.listdir(user_cache_dir(app_name, app_name))
+        assert len(files) == 1
+    
+    def test_index_raw(self):
+        symbol = "NIFTY 50"
+        from_date = date(2020, 6, 1)
+        to_date = date(2020, 7, 30) 
+        d = nse.index_raw(symbol, from_date, to_date)
+        assert d[0]['Index Name'] == 'Nifty 50'
+        assert d[0]['HistoricalDate'] == '30 Jul 2020'
+        assert d[-1]['HistoricalDate'] == '01 Jun 2020'
+        app_name = nse.APP_NAME + '-index'
+        files = os.listdir(user_cache_dir(app_name, app_name))
+        assert len(files) == 2
+    
+    def test_index_csv(self):    
+        from_date = date(2001,1,15)
+        to_date = date(2001,6,15)
+        raw = nse.index_raw("NIFTY 50", from_date, to_date)
+        output = nse.index_csv("NIFTY 50", from_date, to_date)
+        with open(output) as fp:
+            text = fp.read()
+            rows = [x.split(',') for x in text.split('\n')]
+            assert rows[1][2] == raw[0]['OPEN']
+
+    def test_index_df(self):    
+        from_date = date(2001,1,15)
+        to_date = date(2001,6,15)
+        raw = nse.index_raw("NIFTY 50", from_date, to_date)
+        df = nse.index_df("NIFTY 50", from_date, to_date)
+        print(df.head())
+        assert float(raw[0]['OPEN']) == df.iloc[0]['OPEN']    
+        assert float(raw[0]['CLOSE']) == df.iloc[0]['CLOSE']    
+        assert df.iloc[0]['HistoricalDate'] == date(2001,6,15)
