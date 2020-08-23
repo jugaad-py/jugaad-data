@@ -111,7 +111,7 @@ class NSEArchives:
         r = self.get("bhavcopy_fo", yyyy=yyyy, MMM=MMM, dd=dd)
         return r.content
     
-    def bhavcopy_fo_save(self, dt, dest, skip_if_present):
+    def bhavcopy_fo_save(self, dt, dest, skip_if_present=True):
         """ Saves Derivatives Bhavcopy to a directory """
         fmt = "fo%d%b%Ybhav.csv"
         fname = os.path.join(dest, dt.strftime(fmt))
@@ -151,7 +151,7 @@ class NSEIndicesArchives(NSEArchives):
         r = self.get("bhavcopy", yyyy=yyyy, mm=mm, dd=dd)
         return r.text
    
-    def bhavcopy_index_save(self, dt, dest, skip_if_present=False):
+    def bhavcopy_index_save(self, dt, dest, skip_if_present=True):
         """Downloads and saves index bhavcopy csv for a specific date"""
         fmt = "ind_close_all_%d%m%Y.csv"
         fname = os.path.join(dest, dt.strftime(fmt))
