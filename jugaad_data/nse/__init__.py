@@ -5,7 +5,7 @@ import csv
 from pprint import pprint
 from urllib.parse import urljoin
 from requests import Session
-from bs4 import BeautifulSoup
+#from bs4 import BeautifulSoup
 import click
 try:
     import pandas as pd
