@@ -96,7 +96,12 @@ def cached(app_name):
     def _cached(function):
         def wrapper(*args, **kw):
             kw.update(zip(function.__code__.co_varnames, args))
-            cache_dir = user_cache_dir(app_name, app_name)
+            env_dir = os.environ.get("J_CACHE_DIR")
+            if not env_dir:
+                cache_dir = user_cache_dir(app_name, app_name)
+            else:
+                cache_dir = os.path.join(env_dir, app_name)
+
             file_name = kw_to_fname(**kw)
             path = os.path.join(cache_dir, file_name)
             if not os.path.isfile(path):    

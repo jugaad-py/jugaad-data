@@ -132,3 +132,22 @@ class TestCache(TestCase):
             pass
         path = os.path.join(user_cache_dir("testapp"), 'buzz-fizz')
         assert not os.path.isfile(path)
+    
+    def test_demo_with_environment_var(self):
+        os.environ['J_CACHE_DIR'] = '/tmp/'
+        x = demo_function([0], 'v1', 'v2')
+        self.assertEqual(x, {'x': 'v1', 'y': 'v2'})
+        
+        # Check if path exists
+        path = os.path.join("/tmp", 'testapp', 'v1-v2')
+        self.assertTrue(os.path.isfile(path))
+        # Next time it should read from cache, let us see if cache reading works
+        # update the file with new values
+        j = {'x': 'x1', 'y': 'y1'}
+        with open(path, 'wb') as fp:
+            pickle.dump(j, fp)
+        # run the function
+        x = demo_function([0], 'v1', 'v2')
+        self.assertEqual(x, j)
+    
+
