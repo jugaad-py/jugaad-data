@@ -27,6 +27,10 @@ class NSEHistory:
             "Host": "www.nseindia.com",
             "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
             "X-Requested-With": "XMLHttpRequest",
+            "pragma": "no-cache",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate, br",
@@ -37,6 +41,7 @@ class NSEHistory:
         self.path_map = {
             "stock_history": "/api/historical/cm/equity",
             "derivatives": "/api/historical/fo/derivatives",
+            "equity_quote_page": "/get-quotes/equity",
         }
         self.base_url = "https://www.nseindia.com"
         self.cache_dir = ".cache"
@@ -49,6 +54,10 @@ class NSEHistory:
         self.ssl_verify = True
 
     def _get(self, path_name, params):
+        if "nseappid" not in self.s.cookies:
+            path = self.path_map["equity_quote_page"]
+            url = urljoin(self.base_url, path)
+            self.s.get(url, verify=self.ssl_verify)
         path = self.path_map[path_name]
         url = urljoin(self.base_url, path)
         self.r = self.s.get(url, params=params, verify=self.ssl_verify)
