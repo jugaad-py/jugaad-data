@@ -22,7 +22,23 @@ def get_data(symbol, from_date, to_date, series):
             'to': to_date.strftime('%d-%m-%Y'),
             'series': '["{}"]'.format(series),
     }
+    
     return h._get("stock_history", params)
+
+def test_cookie():
+    r = h._get("equity_quote_page", params={})
+    assert r.status_code == 200
+    assert "nseappid" in r.cookies
+    symbol = "RELIANCE"
+    from_date = date(2019,1,1)
+    to_date = date(2019,1,31)
+    series = "EQ"
+    d = get_data(symbol, from_date, to_date, series)
+    j = json.loads(d.text)
+    assert 'data' in j
+    assert j['data'][0]["CH_TIMESTAMP"] == "2019-01-31"
+    assert j['data'][-1]["CH_TIMESTAMP"] == "2019-01-01"
+
 
 def test__get():
     symbol = "RELIANCE"
@@ -30,7 +46,8 @@ def test__get():
     to_date = date(2019,1,31)
     series = "EQ"
     d = get_data(symbol, from_date, to_date, series)
-    j = json.loads(d.text)
+    print(d.text)
+    j = json.loads(d.text)  
     assert 'data' in j
     assert j['data'][0]["CH_TIMESTAMP"] == "2019-01-31"
     assert j['data'][-1]["CH_TIMESTAMP"] == "2019-01-01"
