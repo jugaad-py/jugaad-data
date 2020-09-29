@@ -1,5 +1,5 @@
 from datetime import date
-from jugaad_data.nse import bhavcopy_raw, full_bhavcopy_raw, bhavcopy_fo_raw , bhavcopy_index_raw
+from jugaad_data.nse import bhavcopy_raw, full_bhavcopy_raw, bhavcopy_fo_raw, bhavcopy_index_raw, expiry_dates 
 
 
 def test_bhavcopy():
@@ -26,6 +26,18 @@ def test_bhavcopy_index():
     assert "NIFTY" in r
     assert header in r
 
+def test_expiry_dates():
+    dt = date(2020, 9, 28)
+    dts = expiry_dates(dt, "OPTIDX", "NIFTY", 10000)
+    assert date(2020, 10, 1) in dts
+    assert date(2020, 10, 8) in dts
+    dts = expiry_dates(dt, "FUTIDX", "NIFTY")
+    assert len(dts) == 3
+    dts = expiry_dates(dt, "FUTSTK", "RELIANCE")
+    assert len(dts) == 3
+    dts = expiry_dates(dt, "OPTSTK", "RELIANCE")
+    assert date(2020, 10, 29) in dts
+    assert date(2020, 11, 26) in dts
 
 
 """

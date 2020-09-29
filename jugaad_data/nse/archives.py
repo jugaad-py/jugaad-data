@@ -173,6 +173,19 @@ ia = NSEIndicesArchives()
 bhavcopy_index_raw = ia.bhavcopy_index_raw
 bhavcopy_index_save = ia.bhavcopy_index_save
 
+def expiry_dates(dt, instrument_type="", symbol="", contracts=0):
+    txt = bhavcopy_fo_raw(dt)
+    rows = txt.split("\n")
+    cells = [row.split(',') for row in rows]
+    if instrument_type:
+        cells = filter(lambda x: x[0]==instrument_type, cells)
+    if symbol:
+        cells = filter(lambda x: x[1] == symbol, cells)
+    cells = filter(lambda x: int(x[10])>contracts, cells)
+
+    dts_txt = [row[2] for row in cells]
+    dts = [datetime.strptime(d, "%d-%b-%Y").date() for d in dts_txt]
+    return list(set(dts))
 
 
 
@@ -194,11 +207,5 @@ if __name__ == "__main__":
     for chunk in d.iter_content(chunk_size=1024):
         print("Received")
         print(len(chunk))
-
-
-
-
-
-
 
 
