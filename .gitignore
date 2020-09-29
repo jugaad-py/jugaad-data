@@ -10,6 +10,8 @@ __pycache__/
 
 # C extensions
 *.so
+# vim config
+.ycm_extra_conf.py
 
 # Distribution / packaging
 .Python

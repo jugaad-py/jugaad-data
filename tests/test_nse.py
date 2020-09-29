@@ -441,3 +441,9 @@ class TestIndexHistory(TestCase):
         assert float(raw[0]['OPEN']) == df.iloc[0]['OPEN']    
         assert float(raw[0]['CLOSE']) == df.iloc[0]['CLOSE']    
         assert df.iloc[0]['HistoricalDate'] == date(2001,6,15)
+
+def test_expiry_dates():
+    dt = date(2020,1,1)
+    expiry_dts = nse.expiry_dates(dt, "FUTIDX", "NIFTY")
+    
+     
