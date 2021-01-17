@@ -2,10 +2,16 @@ from datetime import datetime
 from requests import Session
 
 class NSELive:
+    base_url = "https://www.nseindia.com/api"
     page_url = "https://www.nseindia.com/get-quotes/equity?symbol=LT"
-    stock_meta_url = "https://www.nseindia.com/api/equity-meta-info"
-    stock_quote_url = "https://www.nseindia.com/api/quote-equity"
-    market_status = "https://www.nseindia.com/api/marketStatus"
+    _routes = {
+            "stock_meta": "/equity-meta-info",
+            "stock_quote": "/quote-equity",
+            "market_status": "/marketStatus",
+            "chart_data": "/chart-databyindex",
+            "market_turnover": "/market-turnover",
+            "equity_derivative_turnover": "/equity-stock"
+    }
     
     def __init__(self):
         self.s = Session()
@@ -27,9 +33,36 @@ class NSELive:
         self.s.headers.update(h)
         self.s.get(self.page_url)
 
-    def stock_quote(self, symbol):
-        data = {"symbol": symbol}
-        r = self.s.get(self.stock_quote_url, params=data)
+    def get(self, route, payload={}):
+        url = self.base_url + self._routes[route]
+        r = self.s.get(url, params=payload)
         return r.json()
 
+    def stock_quote(self, symbol):
+        data = {"symbol": symbol}
+        return self.get("stock_quote", data) 
+
+    def trade_info(self, symbol):
+        data = {"symbol": symbol, "section": "trade_info"}
+        return self.get("stock_quote", data) 
+
+    def market_status(self):
+        return self.get("market_status", {})
+
+    def chart_data(self, symbol, indices=False):
+        data = {"index" : symbol + "EQN"}
+        if indices:
+            data["index"] = symbol
+            data["indices"] = "true"
+        return self.get("chart_data", data)
+    
+    def tick_data(self, symbol, indices=False):
+        return self.chart_data(symbol, indices)
+
+    def market_turnover(self):
+        return self.get("market_turnover")
+
+    def eq_derivative_turnover(self, type="allcontracts"):
+        data = {"index": type}
+        return self.get("equity_derivative_turnover", data)
 
