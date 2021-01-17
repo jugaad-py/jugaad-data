@@ -10,7 +10,10 @@ class NSELive:
             "market_status": "/marketStatus",
             "chart_data": "/chart-databyindex",
             "market_turnover": "/market-turnover",
-            "equity_derivative_turnover": "/equity-stock"
+            "equity_derivative_turnover": "/equity-stock",
+            "all_indices": "/allIndices",
+            "live_index": "/equity-stockIndices",
+            "index_option_chain": "/option-chain-indices",
     }
     
     def __init__(self):
@@ -65,4 +68,16 @@ class NSELive:
     def eq_derivative_turnover(self, type="allcontracts"):
         data = {"index": type}
         return self.get("equity_derivative_turnover", data)
+    
+    def all_indices(self):
+        return self.get("all_indices")
+
+    def live_index(self, symbol="NIFTY 50"):
+        data = {"index" : symbol}
+        return self.get("live_index", data)
+    
+    def index_option_chain(self, symbol="NIFTY"):
+        data = {"symbol": symbol}
+        return self.get("index_option_chain", data)
+
 

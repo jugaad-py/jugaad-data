@@ -42,3 +42,20 @@ def test_eq_derivative_turnover():
     assert "volume" in d
     assert len(d['value']) > 1
     assert len(d['volume']) > 1
+
+def test_all_indices():
+    d = n.all_indices()
+    assert "advances" in d
+    assert "declines" in d
+    assert len(d['data']) > 1
+
+def test_live_index():
+    d = n.live_index("NIFTY 50")
+    assert "advance" in d
+    assert len(d['data']) == 51
+
+def test_index_option_chain():
+    d = n.index_option_chain("NIFTY")
+    assert "filtered" in d
+    assert "records" in d
+
