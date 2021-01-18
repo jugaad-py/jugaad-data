@@ -22,7 +22,7 @@ Example usage: https://marketsetup.in/tags/jugaad-data/
 Installation
 ============
 
-        pip install jugaad-data
+``pip install jugaad-data``
 
 
 Quick Start
