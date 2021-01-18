@@ -1,9 +1,15 @@
 from jugaad_data.nse.live import NSELive
 
 n = NSELive()
-def test_quote():
+def test_stock_quote():
     r = n.stock_quote("HDFC")
     assert r['info']['symbol'] == 'HDFC'
+
+def test_stock_quote_fno():
+    r = n.stock_quote_fno("HDFC")
+    assert 'strikePrices' in r
+    assert 'info' in r
+    assert 'stocks' in r
 
 def test_trade_info():
     r = n.trade_info("HDFC")
@@ -58,4 +64,8 @@ def test_index_option_chain():
     d = n.index_option_chain("NIFTY")
     assert "filtered" in d
     assert "records" in d
+
+def test_live_fno():
+    d = n.live_fno()
+    assert "SECURITIES IN F&O" == d['name']
 

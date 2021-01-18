@@ -7,6 +7,7 @@ class NSELive:
     _routes = {
             "stock_meta": "/equity-meta-info",
             "stock_quote": "/quote-equity",
+            "stock_derivative_quote": "/quote-derivative",
             "market_status": "/marketStatus",
             "chart_data": "/chart-databyindex",
             "market_turnover": "/market-turnover",
@@ -45,6 +46,10 @@ class NSELive:
         data = {"symbol": symbol}
         return self.get("stock_quote", data) 
 
+    def stock_quote_fno(self, symbol):
+        data = {"symbol": symbol}
+        return self.get("stock_derivative_quote", data)
+
     def trade_info(self, symbol):
         data = {"symbol": symbol, "section": "trade_info"}
         return self.get("stock_quote", data) 
@@ -80,4 +85,5 @@ class NSELive:
         data = {"symbol": symbol}
         return self.get("index_option_chain", data)
 
-
+    def live_fno(self):
+        return self.live_index("SECURITIES IN F&O")
