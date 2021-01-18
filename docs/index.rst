@@ -1,5 +1,5 @@
-Introduction
-============
+Introduction to jugaad-data
+===========================
 
 ``jugad-data`` is a library to fetch live as well as historical stock data. The library supports below functionalities-
 
