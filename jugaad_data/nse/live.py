@@ -2,6 +2,7 @@ from datetime import datetime
 from requests import Session
 
 class NSELive:
+    time_out = 5
     base_url = "https://www.nseindia.com/api"
     page_url = "https://www.nseindia.com/get-quotes/equity?symbol=LT"
     _routes = {

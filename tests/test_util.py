@@ -3,8 +3,8 @@ import math
 import pickle
 import pytest
 from jugaad_data import util as ut
-from datetime import date, datetime
-
+from datetime import date, datetime, timedelta
+import time
 from pyfakefs.fake_filesystem_unittest import TestCase
 from appdirs import user_cache_dir
 
@@ -149,5 +149,19 @@ class TestCache(TestCase):
         # run the function
         x = demo_function([0], 'v1', 'v2')
         self.assertEqual(x, j)
-    
 
+class QuoteApp:
+    time_out = 3
+    @ut.live_cache
+    def rt_quote(self):
+        return datetime.now()
+
+def test_live_cache():
+    q = QuoteApp()
+    r = q.rt_quote()
+    v = q._cache['rt_quote']['value']
+    ts = q._cache['rt_quote']['timestamp']
+    assert q.rt_quote() == v
+    time.sleep(3)
+    assert q.rt_quote() > v
+ 
