@@ -2,11 +2,10 @@ import os
 import collections
 import json
 import pickle
-import datetime
 import time
+from datetime import datetime, timedelta, date
 from concurrent.futures import ThreadPoolExecutor
 import click
-from datetime import date, timedelta
 from appdirs import user_cache_dir
 
 import calendar
@@ -41,13 +40,13 @@ def np_date(dt):
         pass
 
     try:
-        dt = datetime.datetime.strptime(dt, "%d-%b-%Y").date()
+        dt = datetime.strptime(dt, "%d-%b-%Y").date()
         return np.datetime64(dt)
     except:
         pass
 
     try:
-        dt = datetime.datetime.strptime(dt, "%d %b %Y").date()
+        dt = datetime.strptime(dt, "%d %b %Y").date()
         return np.datetime64(dt)
     except:
         pass
@@ -133,5 +132,46 @@ def pool(function, params, use_threads=True, max_workers=2):
     return dfs
 
 def live_cache(app_name):
-    pass
+    """Caches the output for time_out specified. This is done in order to
+    prevent hitting live quote requests to NSE too frequently. This wrapper
+    will fetch the quote/live result first time and return the same result for
+    any calls within 'time_out' seconds.
+
+    Logic:
+        key = concat of args
+        try:
+            cached_value = self._cache[key]
+            if now - self._cache['tstamp'] < time_out
+                return cached_value['value']
+        except AttributeError: # _cache attribute has not been created yet
+            self._cache = {}
+        finally:
+            val = fetch-new-value
+            new_value = {'tstamp': now, 'value': val}
+            self._cache[key] = new_value
+            return val
+
+    """
+    def wrapper(self, *args, **kwargs):
+        """Wrapper function which calls the function only after the timeout,
+        otherwise returns value from the cache.
+
+        """
+        # Get key by just concating the list of args and kwargs values and hope
+        # that it does not break the code :P 
+        inputs =  [str(a) for a in args] + [str(kwargs[k]) for k in kwargs]
+        key = app_name.__name__ + '-'.join(inputs)
+        now = datetime.now()
+        time_out = self.time_out
+        try:
+            cache_obj = self._cache[key]
+            if now - cache_obj['timestamp'] < timedelta(seconds=time_out):
+                return cache_obj['value']
+        except:
+            self._cache = {}
+        value = app_name(self, *args, **kwargs)
+        self._cache[key] = {'value': value, 'timestamp': now}
+        return value
+
+    return wrapper 
 
