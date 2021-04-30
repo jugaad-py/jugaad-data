@@ -4,7 +4,7 @@ https://marketsetup.in/documentation/jugaad-data/
 
 # Introduction
 
-`jugaad-data` is a library to download historical as well as live data from NSE's website.
+`jugaad-data` is a python library to download historical as well as live stock, index as well as economic data from NSE and RBI website using.
 
 [![Build Status](https://travis-ci.org/jugaad-py/jugaad-data.svg?branch=master)](https://travis-ci.org/jugaad-py/jugaad-data)
 
@@ -14,16 +14,17 @@ https://marketsetup.in/documentation/jugaad-data/
 * Supports [new NSE website](https://www.nseindia.com/), (All libraries based on old NSE website might stop working)
 * Powerful CLI (Command line interface), Even non-coders can use it easily
 * Built-in caching mechanism to play nice with NSE. Avoid making un-necessary requests to NSE's website and getting blocked
-* Optional `pandas` support, You don't have to install `pandas` but the library does support pandas
+* Optional `pandas` support 
 
 **Road map**
 
-| Exchange | Segment    | Supported? |
+| Website  | Segment    | Supported? |
 |----------|------------|------------|
 | NSE      | Stocks     | Yes        |
 | NSE      | Stocks F&O | Yes        |
 | NSE      | Index      | Yes    |
 | NSE      | Index F&O  | Yes        |
+| RBI	   | Current Rates| Yes |
 
 # Installation
 
