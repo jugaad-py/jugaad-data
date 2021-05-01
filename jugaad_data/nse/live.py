@@ -1,6 +1,9 @@
+"""
+    Implements live data fetch functionality
+"""
 from datetime import datetime
 from requests import Session
-
+from ..util import live_cache
 class NSELive:
     time_out = 5
     base_url = "https://www.nseindia.com/api"
@@ -43,21 +46,26 @@ class NSELive:
         r = self.s.get(url, params=payload)
         return r.json()
 
+    @live_cache
     def stock_quote(self, symbol):
         data = {"symbol": symbol}
         return self.get("stock_quote", data) 
 
+    @live_cache
     def stock_quote_fno(self, symbol):
         data = {"symbol": symbol}
         return self.get("stock_derivative_quote", data)
 
+    @live_cache
     def trade_info(self, symbol):
         data = {"symbol": symbol, "section": "trade_info"}
         return self.get("stock_quote", data) 
 
+    @live_cache
     def market_status(self):
         return self.get("market_status", {})
 
+    @live_cache
     def chart_data(self, symbol, indices=False):
         data = {"index" : symbol + "EQN"}
         if indices:
@@ -65,16 +73,20 @@ class NSELive:
             data["indices"] = "true"
         return self.get("chart_data", data)
     
+    @live_cache
     def tick_data(self, symbol, indices=False):
         return self.chart_data(symbol, indices)
 
+    @live_cache
     def market_turnover(self):
         return self.get("market_turnover")
 
+    @live_cache
     def eq_derivative_turnover(self, type="allcontracts"):
         data = {"index": type}
         return self.get("equity_derivative_turnover", data)
     
+    @live_cache
     def all_indices(self):
         return self.get("all_indices")
 
@@ -82,9 +94,11 @@ class NSELive:
         data = {"index" : symbol}
         return self.get("live_index", data)
     
+    @live_cache
     def index_option_chain(self, symbol="NIFTY"):
         data = {"symbol": symbol}
         return self.get("index_option_chain", data)
 
+    @live_cache
     def live_fno(self):
         return self.live_index("SECURITIES IN F&O")

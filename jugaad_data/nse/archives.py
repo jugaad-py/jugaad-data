@@ -1,3 +1,7 @@
+"""
+    Implements functionality to download archival data such as Bhavcopy, bulk
+    deals from NSE and NSEIndices website
+"""
 from datetime import datetime, date
 import os
 import io
@@ -78,7 +82,15 @@ class NSEArchives:
         dd = dt.strftime('%d')
         mm = dt.strftime('%m')
         yyyy = dt.year
-        r = self.get("bhavcopy_full", yyyy=yyyy, mm=mm, dd=dd)
+        try:
+            r = self.get("bhavcopy_full", yyyy=yyyy, mm=mm, dd=dd)
+        except requests.exceptions.ReadTimeout:
+            if dt < date(2020,1,1): # Receiving timeouts for dates before 2020
+                raise requests.exceptions.ReadTimeout("""Either request timed
+                                                      out or full bhavcopy file is
+                                                      not available for given
+                                                      date (2019 and prior
+                                                      dates)""") 
         return r.text
 
     def full_bhavcopy_save(self, dt, dest, skip_if_present=True):
@@ -176,13 +188,17 @@ bhavcopy_index_save = ia.bhavcopy_index_save
 def expiry_dates(dt, instrument_type="", symbol="", contracts=0):
     txt = bhavcopy_fo_raw(dt)
     rows = txt.split("\n")
+    rows.pop(0) # Remove headers
+    if len(rows[-1].split(',')) <= 10:
+        rows.pop(-1) # Remove last blank row
     cells = [row.split(',') for row in rows]
     if instrument_type:
         cells = filter(lambda x: x[0]==instrument_type, cells)
     if symbol:
         cells = filter(lambda x: x[1] == symbol, cells)
+    
     cells = filter(lambda x: int(x[10])>contracts, cells)
-
+    
     dts_txt = [row[2] for row in cells]
     dts = [datetime.strptime(d, "%d-%b-%Y").date() for d in dts_txt]
     return list(set(dts))

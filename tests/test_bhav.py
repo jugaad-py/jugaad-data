@@ -1,6 +1,7 @@
 from datetime import date
 from jugaad_data.nse import bhavcopy_raw, full_bhavcopy_raw, bhavcopy_fo_raw, bhavcopy_index_raw, expiry_dates 
-
+import pytest
+import requests
 
 def test_bhavcopy():
     r = bhavcopy_raw(date(2020,1,1))
@@ -13,6 +14,10 @@ def test_full_bhavcopy():
     header = "SYMBOL, SERIES, DATE1, PREV_CLOSE, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, LAST_PRICE, CLOSE_PRICE, AVG_PRICE, TTL_TRD_QNTY, TURNOVER_LACS, NO_OF_TRADES, DELIV_QTY, DELIV_PER"
     assert "SBIN" in r
     assert header in r
+
+    with pytest.raises(requests.exceptions.ReadTimeout) as e:
+        r = full_bhavcopy_raw(date(2019,1,1))
+    assert '2019' in e.value.args[0]    
 
 def test_bhavcopy_fo():
     r = bhavcopy_fo_raw(date(2020,1,1))
@@ -28,6 +33,9 @@ def test_bhavcopy_index():
 
 def test_expiry_dates():
     dt = date(2020, 9, 28)
+    dts = expiry_dates(dt)
+    assert date(2020, 10, 1) in dts
+    assert date(2020, 10, 8) in dts
     dts = expiry_dates(dt, "OPTIDX", "NIFTY", 10000)
     assert date(2020, 10, 1) in dts
     assert date(2020, 10, 8) in dts
@@ -38,7 +46,6 @@ def test_expiry_dates():
     dts = expiry_dates(dt, "OPTSTK", "RELIANCE")
     assert date(2020, 10, 29) in dts
     assert date(2020, 11, 26) in dts
-
 
 """
 def test_bhavcopy_on_holiday():
