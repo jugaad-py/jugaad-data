@@ -1,3 +1,8 @@
+"""
+    Implements functionality to download historical stock, index and
+    derivatives data from NSE and
+    NSEIndices website
+"""
 import os
 import json
 import itertools
