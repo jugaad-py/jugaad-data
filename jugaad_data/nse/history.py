@@ -108,14 +108,14 @@ class NSEHistory:
     def stock_raw(self, symbol, from_date, to_date, series="EQ"):
         date_ranges = ut.break_dates(from_date, to_date)
         params = [(symbol, x[0], x[1], series) for x in reversed(date_ranges)]
-        chunks = ut.pool(self._stock, params)
+        chunks = ut.pool(self._stock, params, max_workers=self.workers)
             
         return list(itertools.chain.from_iterable(chunks))
 
     def derivatives_raw(self, symbol, from_date, to_date, expiry_date, instrument_type, strike_price, option_type):
         date_ranges = ut.break_dates(from_date, to_date)
         params = [(symbol, x[0], x[1], expiry_date, instrument_type, strike_price, option_type) for x in reversed(date_ranges)]
-        chunks = ut.pool(self._derivatives, params)
+        chunks = ut.pool(self._derivatives, params, max_workers=self.workers)
         return list(itertools.chain.from_iterable(chunks))
 
        
@@ -314,7 +314,7 @@ class NSEIndexHistory(NSEHistory):
     def index_raw(self, symbol, from_date, to_date):
         date_ranges = ut.break_dates(from_date, to_date)
         params = [(symbol, x[0], x[1]) for x in reversed(date_ranges)]
-        chunks = ut.pool(self._index, params)
+        chunks = ut.pool(self._index, params, max_workers=self.workers)
         return list(itertools.chain.from_iterable(chunks))
 
 
