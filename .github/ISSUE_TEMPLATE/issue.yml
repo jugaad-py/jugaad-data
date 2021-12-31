@@ -7,6 +7,17 @@ body:
       value: |
         Thanks for your interest in Jugaad-data! 🚀
   - type: textarea
+    id: description
+    attributes:
+      label: Issue description
+      description: |
+        Describe what happened and what you expected
+      placeholder: |
+        The bug description
+      render: python
+    validations:
+      required: true
+  - type: textarea
     id: example
     attributes:
       label: Example Code
@@ -16,15 +27,18 @@ body:
         If I (or someone) can copy it, run it, and see it right away, there's a much higher chance I (or someone) will be able to help you.
 
       placeholder: |
-        from fastapi import FastAPI
-
-        app = FastAPI()
-
-
-        @app.get("/")
-        def read_root():
-            return {"Hello": "World"}
+        from jugaad_data.nse import bhavcopy_save, bhavcopy_fo_save
       render: python
     validations:
       required: true
-
+  - type: textarea
+    id: error
+    attributes:
+      label: Error snippet 
+      description: |
+        Please add your error message
+      placeholder: |
+        Exception
+      render: python
+    validations:
+      required: true
