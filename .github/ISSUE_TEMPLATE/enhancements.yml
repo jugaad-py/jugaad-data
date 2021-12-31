@@ -1,0 +1,43 @@
+name: Feature requests
+description: Describe your feature request 
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for your interest in Jugaad-data! 🚀
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the required feature
+      description: |
+        Describe what data extraction feature you are proposing. Is this data currently available on nseindia.com or niftyindices.com website.
+      placeholder: |
+        The bug description
+    validations:
+      required: true
+  - type: textarea
+    id: url
+    attributes:
+      label: URL where you observed this data 
+      description: |
+              Share the url where you have seen this data
+      placeholder: |
+        https://nseindia.com/abc/xyz
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: API endpoint involved 
+      description: |
+        Were you able to locate the exact endpoint and the data exchange using developer tools? if yes, please share the API endpoint and parameters.
+      placeholder: |
+        Sample API endpoint and parameters-
+        url - https://nseindia.com/api/stockDataEndpoint
+        method - GET
+        data/parameter - 
+           from - 2021-01-01
+           to - 2021-02-01
+           symbol - SBIN
+        
