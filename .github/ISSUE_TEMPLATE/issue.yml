@@ -1,4 +1,4 @@
-name: Issue or bug
+name: Bug or issues
 description: Describe your problem in detail 
 labels: [bug]
 body:
