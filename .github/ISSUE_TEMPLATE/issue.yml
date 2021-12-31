@@ -5,20 +5,26 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for your interest in FastAPI! 🚀
+        Thanks for your interest in Jugaad-data! 🚀
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Code
+      description: |
+        Please add a self-contained, [minimal, reproducible, example](https://stackoverflow.com/help/minimal-reproducible-example) with your use case.
 
-        Please follow these instructions, fill every question, and do every step. 🙏
-        
-        I'm asking this because answering questions and solving problems in GitHub issues is what consumes most of the time.
-        
-        I end up not being able to add new features, fix bugs, review pull requests, etc. as fast as I wish because I have to spend too much time handling issues.
+        If I (or someone) can copy it, run it, and see it right away, there's a much higher chance I (or someone) will be able to help you.
 
-        All that, on top of all the incredible help provided by a bunch of community members, the [FastAPI Experts](https://fastapi.tiangolo.com/fastapi-people/#experts), that give a lot of their time to come here and help others.
+      placeholder: |
+        from fastapi import FastAPI
 
-        That's a lot of work they are doing, but if more FastAPI users came to help others like them just a little bit more, it would be much less effort for them (and you and me 😅).
+        app = FastAPI()
 
-        By asking questions in a structured way (following this) it will be much easier to help you.
-        
-        And there's a high chance that you will find the solution along the way and you won't even have to submit it and wait for an answer. 😎
 
-        As there are too many issues with questions, I'll have to close the incomplete ones. That will allow me (and others) to focus on helping people like you that follow the whole process and help us help you.
+        @app.get("/")
+        def read_root():
+            return {"Hello": "World"}
+      render: python
+    validations:
+      required: true
+
