@@ -27,19 +27,10 @@ body:
     validations:
       required: true
   - type: textarea
-    id: details
+    id: endpoint
     attributes:
       label: API endpoint involved 
       description: |
         Were you able to locate the exact endpoint and the data exchange using developer tools? if yes, please share the API endpoint and parameters.
       placeholder: |
-        Sample API endpoint and parameters-
-
         url - https://nseindia.com/api/stockDataEndpoint
-
-        method - GET
-        data/parameter -
-           from - 2021-01-01
-           to - 2021-02-01
-           symbol - SBIN
-        
