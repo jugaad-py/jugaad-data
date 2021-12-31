@@ -1,6 +1,6 @@
 name: Issue or bug
 description: Describe your problem in detail 
-labels: [question]
+labels: [bug]
 body:
   - type: markdown
     attributes:
@@ -14,7 +14,6 @@ body:
         Describe what happened and what you expected
       placeholder: |
         The bug description
-      render: python
     validations:
       required: true
   - type: textarea
