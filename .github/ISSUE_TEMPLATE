@@ -1,0 +1,33 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What was expected and what actually happened?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: textarea
+    id: code-snippet
+    attributes:
+      label: Please share the code snippet which caused the error?
+      placeholder: Tell us what you see!
+      value: "```python\n# Enter your code snippet here```"
+    validations:
+      required: true
+  - type: textarea
+    id: error-snippet
+    attributes:
+      label: Please share the error trace?
+      placeholder: Tell us what you see!
+      value: "```python\n# Enter your error here```"
+    validations:
+      required: true
