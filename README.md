@@ -151,4 +151,4 @@ Options:
 
 If my work has helped you in anyway, you can buy me a coffee 
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](buymeacoffee.com/Jugaader)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/Jugaader)
