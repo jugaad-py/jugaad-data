@@ -19,6 +19,7 @@ class NSELive:
             "all_indices": "/allIndices",
             "live_index": "/equity-stockIndices",
             "index_option_chain": "/option-chain-indices",
+            "pre_open_market": "/market-data-pre-open",
     }
     
     def __init__(self):
@@ -102,3 +103,8 @@ class NSELive:
     @live_cache
     def live_fno(self):
         return self.live_index("SECURITIES IN F&O")
+    
+    @live_cache
+    def pre_open_market(self, key="NIFTY"):
+        data = {"key": key}
+        return self.get("pre_open_market", data)
