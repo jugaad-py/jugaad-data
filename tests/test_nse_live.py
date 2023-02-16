@@ -69,3 +69,8 @@ def test_live_fno():
     d = n.live_fno()
     assert "SECURITIES IN F&O" == d['name']
 
+def test_pre_open_market():
+    d = n.pre_open_market("NIFTY")
+    assert "declines" in d
+    assert "unchanged" in d
+    assert "advances" in d
