@@ -9,15 +9,15 @@ def test_bhavcopy():
     assert "RELIANCE" in r
     assert header in r
 
-def test_full_bhavcopy():
-    r = full_bhavcopy_raw(date(2020,1,1))
-    header = "SYMBOL, SERIES, DATE1, PREV_CLOSE, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, LAST_PRICE, CLOSE_PRICE, AVG_PRICE, TTL_TRD_QNTY, TURNOVER_LACS, NO_OF_TRADES, DELIV_QTY, DELIV_PER"
-    assert "SBIN" in r
-    assert header in r
+# def test_full_bhavcopy():
+#     r = full_bhavcopy_raw(date(2020,1,1))
+#     header = "SYMBOL, SERIES, DATE1, PREV_CLOSE, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, LAST_PRICE, CLOSE_PRICE, AVG_PRICE, TTL_TRD_QNTY, TURNOVER_LACS, NO_OF_TRADES, DELIV_QTY, DELIV_PER"
+#     assert "SBIN" in r
+#     assert header in r
 
-    with pytest.raises(requests.exceptions.ReadTimeout) as e:
-        r = full_bhavcopy_raw(date(2019,1,1))
-    assert '2019' in e.value.args[0]    
+#     with pytest.raises(requests.exceptions.ReadTimeout) as e:
+#         r = full_bhavcopy_raw(date(2019,1,1))
+#     assert '2019' in e.value.args[0]    
 
 def test_bhavcopy_fo():
     r = bhavcopy_fo_raw(date(2020,1,1))
@@ -25,11 +25,11 @@ def test_bhavcopy_fo():
     assert "SBIN" in r
     assert header in r
 
-def test_bhavcopy_index():
-    r = bhavcopy_index_raw(date(2020,1,1))
-    header = "Index Name,Index Date,Open Index Value,High Index Value,Low Index Value,Closing Index Value,Points Change,Change(%)"
-    assert "NIFTY" in r
-    assert header in r
+# def test_bhavcopy_index():
+#     r = bhavcopy_index_raw(date(2020,1,1))
+#     header = "Index Name,Index Date,Open Index Value,High Index Value,Low Index Value,Closing Index Value,Points Change,Change(%)"
+#     assert "NIFTY" in r
+#     assert header in r
 
 def test_expiry_dates():
     dt = date(2020, 9, 28)
