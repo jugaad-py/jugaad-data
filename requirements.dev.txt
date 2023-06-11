@@ -1,4 +1,4 @@
-pytest==6.0.1
+pytest==7.1.2
 pytest-testmon
 pytest-watch
 pyfakefs
