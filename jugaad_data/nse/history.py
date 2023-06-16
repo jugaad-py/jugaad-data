@@ -368,7 +368,7 @@ def index_df(symbol, from_date, to_date):
         raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
     raw = index_raw(symbol, from_date, to_date)
     df = pd.DataFrame(raw)
-    index_dtypes = {'OPEN': ut.np_float, 'HIGH': np.float, 'LOW': np.float, 'CLOSE': ut.np_float,
+    index_dtypes = {'OPEN': ut.np_float, 'HIGH': ut.np_float, 'LOW': ut.np_float, 'CLOSE': ut.np_float,
                     'Index Name': str, 'INDEX_NAME': str, 'HistoricalDate': ut.np_date}
     for col, dtype in index_dtypes.items():
         df[col] = df[col].apply(dtype)
@@ -379,7 +379,7 @@ def index_pe_df(symbol, from_date, to_date):
         raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
     raw = index_pe_raw(symbol, from_date, to_date)
     df = pd.DataFrame(raw)
-    index_dtypes = {'pe': ut.np_float, 'pb': np.float, 'divYield': np.float,
+    index_dtypes = {'pe': ut.np_float, 'pb': ut.np_float, 'divYield': ut.np_float,
                     'Index Name': str, 'DATE': ut.np_date}
     for col, dtype in index_dtypes.items():
         df[col] = df[col].apply(dtype)
