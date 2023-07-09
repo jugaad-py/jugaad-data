@@ -20,6 +20,7 @@ class NSELive:
             "live_index": "/equity-stockIndices",
             "index_option_chain": "/option-chain-indices",
             "pre_open_market": "/market-data-pre-open",
+            "holiday_list": "/holiday-master?type=trading"
     }
     
     def __init__(self):
@@ -108,3 +109,7 @@ class NSELive:
     def pre_open_market(self, key="NIFTY"):
         data = {"key": key}
         return self.get("pre_open_market", data)
+    
+    @live_cache
+    def holiday_list(self):
+        return self.get("holiday_list", {})
