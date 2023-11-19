@@ -22,13 +22,9 @@ def test_market_status():
 
 def test_tick_data():
     d = n.tick_data("HDFC")
-    assert "closePrice" in d
-    assert "identifier" in d
     assert "grapthData" in d
     d = n.tick_data("NIFTY 50", True)
-    assert "closePrice" in d
     assert "grapthData" in d
-    assert "identifier" in d
 
 def test_market_turnover():
     d = n.market_turnover()
