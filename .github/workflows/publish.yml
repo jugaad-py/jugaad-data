@@ -9,7 +9,7 @@ on:
       - master
 jobs:
   deploy:
-    needs: [Build]
+    needs: [run-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
