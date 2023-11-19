@@ -15,7 +15,7 @@ dynamic = ["dependencies"]
 
 
 [project.scripts]
-jtrader = "jugaad_data.cli:cli"
+jdata = "jugaad_data.cli:cli"
 
 [project.urls]
 Homepage = "https://marketsetup.in/documentation/jugaad-data/"
