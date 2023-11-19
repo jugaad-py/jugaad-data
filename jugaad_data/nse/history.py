@@ -290,6 +290,7 @@ class NSEIndexHistory(NSEHistory):
             }
         self.path_map = {
             "index_history": "/Backpage.aspx/getHistoricaldatatabletoString",
+            "index_pe_history": "/Backpage.aspx/getpepbHistoricaldataDBtoString"
         }
         self.base_url = "https://niftyindices.com"
         self.s = Session()
@@ -316,10 +317,26 @@ class NSEIndexHistory(NSEHistory):
         params = [(symbol, x[0], x[1]) for x in reversed(date_ranges)]
         chunks = ut.pool(self._index, params, max_workers=self.workers)
         return list(itertools.chain.from_iterable(chunks))
+    
+    @ut.cached(APP_NAME + '-index_pe')
+    def _index_pe(self, symbol, from_date, to_date):
+        params = {'name': symbol,
+                'startDate': from_date.strftime("%d-%b-%Y"),
+                'endDate': to_date.strftime("%d-%b-%Y")
+        }
+        r = self._post_json("index_pe_history", params=params)
+        return json.loads(self.r.json()['d'])
+
+    def index_pe_raw(self, symbol, from_date, to_date):
+        date_ranges = ut.break_dates(from_date, to_date)
+        params = [(symbol, x[0], x[1]) for x in reversed(date_ranges)]
+        chunks = ut.pool(self._index_pe, params, max_workers=self.workers)
+        return list(itertools.chain.from_iterable(chunks))
 
 
 ih = NSEIndexHistory()
 index_raw = ih.index_raw
+index_pe_raw = ih.index_pe_raw
 
 def index_csv(symbol, from_date, to_date, output="", show_progress=False):
     if show_progress:
@@ -346,18 +363,25 @@ def index_csv(symbol, from_date, to_date, output="", show_progress=False):
             writer.writerows(raw)
     return output
 
-index_dtypes = [  str, str, ut.np_date,
-            ut.np_float, ut.np_float,
-            ut.np_float, ut.np_float,
-            ut.np_float, ut.np_float,
-            ut.np_float, ut.np_float, ut.np_float,
-            ut.np_int, ut.np_float, ut.np_int, str]
 def index_df(symbol, from_date, to_date):
     if not pd:
         raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
     raw = index_raw(symbol, from_date, to_date)
     df = pd.DataFrame(raw)
-    for i, h in enumerate(df.columns):
-        df[h] = df[h].apply(index_dtypes[i])
+    index_dtypes = {'OPEN': ut.np_float, 'HIGH': ut.np_float, 'LOW': ut.np_float, 'CLOSE': ut.np_float,
+                    'Index Name': str, 'INDEX_NAME': str, 'HistoricalDate': ut.np_date}
+    for col, dtype in index_dtypes.items():
+        df[col] = df[col].apply(dtype)
+    return df
+
+def index_pe_df(symbol, from_date, to_date):
+    if not pd:
+        raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
+    raw = index_pe_raw(symbol, from_date, to_date)
+    df = pd.DataFrame(raw)
+    index_dtypes = {'pe': ut.np_float, 'pb': ut.np_float, 'divYield': ut.np_float,
+                    'Index Name': str, 'DATE': ut.np_date}
+    for col, dtype in index_dtypes.items():
+        df[col] = df[col].apply(dtype)
     return df
 
