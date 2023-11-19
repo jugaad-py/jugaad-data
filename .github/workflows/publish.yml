@@ -4,12 +4,14 @@
 name: Upload Python Package
 
 on:
-  push:
+  workflow_run:
+    workflows: ["run-tests"]
+    types:
+      - completed
     branches:
       - master
 jobs:
   deploy:
-    needs: [run-tests]
     runs-on: ubuntu-latest
     steps:
       - name: Dump GitHub context
