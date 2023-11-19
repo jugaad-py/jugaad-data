@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jugaad-data"
+version = "0.25"
+requires-python = ">= 3.6"
+authors = [{"name"= "jugaad-coder", "email"="abc@xyz.com"}]
+description = "Free Zerodha API python library"
+readme = "README.md"
+license = {file = "LICENSE.YOLO.md"}
+keywords = ["NSE", "Live", "Bhavcopy", "History", "Futures", "Options", "Stock Data"]
+dynamic = ["dependencies"]
+
+
+[project.scripts]
+jdata = "jugaad_data.cli:cli"
+
+[project.urls]
+Homepage = "https://marketsetup.in/documentation/jugaad-data/"
+Documentation = "https://marketsetup.in/documentation/jugaad-data/"
+Repository = "https://github.com/jugaad-py/jugaad-data"
+Issues = "https://github.com/jugaad-py/jugaad-data/issues"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
