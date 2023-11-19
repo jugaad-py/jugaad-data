@@ -22,7 +22,7 @@ def unzip(function):
 
 
 class NSEArchives:
-    base_url = "https://archives.nseindia.com"
+    base_url = "https://nsearchives.nseindia.com/"
     """Conventions
            d - 1, 12 (without leading zero)
           dd - 01, 21 (day of the month with leading zero)
