@@ -194,6 +194,14 @@ class TestIndexHistory(TestCase):
             rows = [x.split(',') for x in text.split('\n')]
             assert rows[1][2] == raw[0]['OPEN']
 
+    def test_index_df(self):    
+        from_date = date(2001,1,15)
+        to_date = date(2001,6,15)
+        index_df = nse.index_df("NIFTY 50", from_date, to_date)
+        assert len(index_df) > 100 
+        assert list(index_df.columns) == ['Index Name', 'INDEX_NAME', 'HistoricalDate', 'OPEN', 'HIGH',
+       'LOW', 'CLOSE'] 
+
 
 def test_expiry_dates():
     dt = date(2020,1,1)
