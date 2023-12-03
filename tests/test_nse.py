@@ -153,32 +153,6 @@ class TestNSECache(TestCase):
         assert df['DATE'].iloc[0] == np.datetime64("2002-01-15")
         assert df['DATE'].iloc[-1] == np.datetime64("2001-01-15")
         assert df['OPEN'].iloc[0] == 220
-    
-    """
-    def test__stock_futures(self):
-        from_date = date(2020, 7, 1)
-        to_date = date(2020, 7, 30) 
-        expiry_date = to_date
-        j = h._stock_futures("SBIN", from_date, to_date, expiry_date)
-        assert j[0]["FH_TIMESTAMP"] == "30-Jul-2020"
-        assert j[-1]["FH_TIMESTAMP"] == "01-Jul-2020"
-        for k, v in j[0].items():
-            print("{}\t{}".format(k, v))
-        print(len(j[0])) 
-        assert False
-     
-    def test_stock_futures_raw(self):
-        from_date = date(2020, 6, 1)
-        to_date = date(2020, 7, 30) 
-        expiry_date = to_date
-        j = h.stock_futures_raw("SBIN", from_date, to_date, expiry_date)
-        assert j[0]["FH_TIMESTAMP"] == "30-Jul-2020"
-        assert j[-1]["FH_TIMESTAMP"] == "01-Jun-2020"
-     
-        app_name = nse.APP_NAME + '-stock-fut'
-        files = os.listdir(user_cache_dir(app_name, app_name))
-        assert len(files) == 2
-    """
 
 class TestDerivatives(TestCase):
     def setUp(self):
