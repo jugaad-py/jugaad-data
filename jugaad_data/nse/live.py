@@ -19,6 +19,8 @@ class NSELive:
             "all_indices": "/allIndices",
             "live_index": "/equity-stockIndices",
             "index_option_chain": "/option-chain-indices",
+            "equity_option_chain": "/option-chain-equities",
+            "currency_option_chain": "/option-chain-currency",
             "pre_open_market": "/market-data-pre-open",
             "holiday_list": "/holiday-master?type=trading"
     }
@@ -100,6 +102,16 @@ class NSELive:
     def index_option_chain(self, symbol="NIFTY"):
         data = {"symbol": symbol}
         return self.get("index_option_chain", data)
+
+    @live_cache
+    def equities_option_chain(self, symbol):
+        data = {"symbol": symbol}
+        return self.get("equity_option_chain", data)
+
+    @live_cache
+    def currency_option_chain(self, symbol="USDINR"):
+        data = {"symbol": symbol}
+        return self.get("currency_option_chain", data)
 
     @live_cache
     def live_fno(self):

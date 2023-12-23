@@ -61,6 +61,18 @@ def test_index_option_chain():
     assert "filtered" in d
     assert "records" in d
 
+def test_equities_option_chain():
+    d = n.equities_option_chain("RELIANCE")
+    assert "filtered" in d
+    assert "records" in d
+    assert "data" in d["records"]
+
+def test_currency_option_chain():
+    d = n.currency_option_chain("USDINR")
+    assert "filtered" in d
+    assert "records" in d
+    assert "data" in d["records"]
+
 def test_live_fno():
     d = n.live_fno()
     assert "SECURITIES IN F&O" == d['name']
