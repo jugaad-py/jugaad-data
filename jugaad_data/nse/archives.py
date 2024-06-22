@@ -48,7 +48,10 @@ class NSEArchives:
                 "bhavcopy": "/content/historical/EQUITIES/{yyyy}/{MMM}/cm{dd}{MMM}{yyyy}bhav.csv.zip",
                 "bhavcopy_full": "/products/content/sec_bhavdata_full_{dd}{mm}{yyyy}.csv",
                 "bulk_deals": "/content/equities/bulk.csv",
-                "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip"
+                "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip",
+                "udiff_bhavcopy":"/content/cm/BhavCopy_NSE_CM_0_0_0_{yyyy}{mm}{dd}_F_0000.csv.zip",
+                "udiff_bhavcopy_fo":"/content/fo/BhavCopy_NSE_FO_0_0_0_{yyyy}{mm}{dd}_F_0000.csv.zip",
+                
             }
         
     def get(self, rout, **params):
@@ -133,6 +136,46 @@ class NSEArchives:
         with open(fname, 'w') as fp:
             fp.write(text)
         return fname
+    
+    @unzip
+    def udiff_bhavcopy_fo_raw(self, dt):
+        """Downloads raw bhavcopy text for a specific date"""
+        dd = dt.strftime('%d')
+        mm = dt.strftime('%m').upper()
+        yyyy = dt.year
+        r = self.get("udiff_bhavcopy_fo", yyyy=yyyy, mm=mm, dd=dd)
+        return r.content
+    
+    def udiff_bhavcopy_fo_save(self, dt, dest, skip_if_present=True):
+        """ Saves Derivatives Bhavcopy to a directory """
+        fmt = "BhavCopy_NSE_FO_0_0_0_%Y%m%d_F_0000.csv"
+        fname = os.path.join(dest, dt.strftime(fmt))
+        if os.path.isfile(fname) and skip_if_present:
+            return fname
+        text = self.udiff_bhavcopy_fo_raw(dt)
+        with open(fname, 'w') as fp:
+            fp.write(text)
+        return fname
+    
+    @unzip
+    def udiff_bhavcopy_raw(self, dt):
+        """Downloads raw bhavcopy text for a specific date"""
+        dd = dt.strftime('%d')
+        mm = dt.strftime('%m').upper()
+        yyyy = dt.year
+        r = self.get("udiff_bhavcopy", yyyy=yyyy, mm=mm, dd=dd)
+        return r.content
+    
+    def udiff_bhavcopy_save(self, dt, dest, skip_if_present=True):
+        """ Saves Derivatives Bhavcopy to a directory """
+        fmt = "BhavCopy_NSE_FO_0_0_0_%Y%m%d_F_0000.csv"
+        fname = os.path.join(dest, dt.strftime(fmt))
+        if os.path.isfile(fname) and skip_if_present:
+            return fname
+        text = self.udiff_bhavcopy_raw(dt)
+        with open(fname, 'w') as fp:
+            fp.write(text)
+        return fname
 
 class NSEIndicesArchives(NSEArchives):
     def __init__(self):
@@ -181,6 +224,11 @@ full_bhavcopy_raw = a.full_bhavcopy_raw
 full_bhavcopy_save = a.full_bhavcopy_save
 bhavcopy_fo_raw = a.bhavcopy_fo_raw
 bhavcopy_fo_save = a.bhavcopy_fo_save
+udiff_bhavcopy_fo_raw = a.udiff_bhavcopy_fo_raw
+udiff_bhavcopy_fo_save = a.udiff_bhavcopy_fo_save
+udiff_bhavcopy_raw = a.udiff_bhavcopy_raw
+udiff_bhavcopy_save = a.udiff_bhavcopy_save
+
 ia = NSEIndicesArchives()
 bhavcopy_index_raw = ia.bhavcopy_index_raw
 bhavcopy_index_save = ia.bhavcopy_index_save
