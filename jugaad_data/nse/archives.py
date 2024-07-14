@@ -168,7 +168,7 @@ class NSEArchives:
     
     def udiff_bhavcopy_save(self, dt, dest, skip_if_present=True):
         """ Saves Derivatives Bhavcopy to a directory """
-        fmt = "BhavCopy_NSE_FO_0_0_0_%Y%m%d_F_0000.csv"
+        fmt = "BhavCopy_NSE_CM_0_0_0_%Y%m%d_F_0000.csv"
         fname = os.path.join(dest, dt.strftime(fmt))
         if os.path.isfile(fname) and skip_if_present:
             return fname
