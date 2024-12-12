@@ -2,7 +2,7 @@
     Implements live data fetch functionality
 """
 from datetime import datetime
-from requests import Session
+import httpx
 from ..util import live_cache
 class NSELive:
     time_out = 5
@@ -24,36 +24,36 @@ class NSELive:
             "pre_open_market": "/market-data-pre-open",
             "holiday_list": "/holiday-master?type=trading"
     }
-    
+
     def __init__(self):
-        self.s = Session()
-        h = {
-            "Host": "www.nseindia.com",
-            "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
-            "X-Requested-With": "XMLHttpRequest",
-            "pragma": "no-cache",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
+        headers = {
+            "host": "www.nseindia.com",
+            "cache-control": "no-cache",
+            "dnt": "1",
+            "upgrade-insecure-requests": "1",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+            "sec-fetch-user": "?1",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
             "sec-fetch-site": "same-origin",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            }
-        self.s.headers.update(h)
-        self.s.get(self.page_url)
+            "sec-fetch-mode": "cors",
+            "accept-language": "en-US,en;q=0.9,hi;q=0.8",
+            "accept-encoding": "gzip, deflate, br",
+        }
+        
+        self.client = httpx.Client(http2=True, timeout=self.time_out, headers=headers)
+        self.client.headers.update(headers)
+        self.client.get(self.page_url)
 
     def get(self, route, payload={}):
         url = self.base_url + self._routes[route]
-        r = self.s.get(url, params=payload)
-        return r.json()
+        response = self.client.get(url, params=payload)
+        response.raise_for_status()  # To ensure we catch HTTP errors
+        return response.json()
 
     @live_cache
     def stock_quote(self, symbol):
         data = {"symbol": symbol}
-        return self.get("stock_quote", data) 
+        return self.get("stock_quote", data)
 
     @live_cache
     def stock_quote_fno(self, symbol):
@@ -63,7 +63,7 @@ class NSELive:
     @live_cache
     def trade_info(self, symbol):
         data = {"symbol": symbol, "section": "trade_info"}
-        return self.get("stock_quote", data) 
+        return self.get("stock_quote", data)
 
     @live_cache
     def market_status(self):
@@ -76,7 +76,7 @@ class NSELive:
             data["index"] = symbol
             data["indices"] = "true"
         return self.get("chart_data", data)
-    
+
     @live_cache
     def tick_data(self, symbol, indices=False):
         return self.chart_data(symbol, indices)
@@ -89,7 +89,7 @@ class NSELive:
     def eq_derivative_turnover(self, type="allcontracts"):
         data = {"index": type}
         return self.get("equity_derivative_turnover", data)
-    
+
     @live_cache
     def all_indices(self):
         return self.get("all_indices")
@@ -97,7 +97,7 @@ class NSELive:
     def live_index(self, symbol="NIFTY 50"):
         data = {"index" : symbol}
         return self.get("live_index", data)
-    
+
     @live_cache
     def index_option_chain(self, symbol="NIFTY"):
         data = {"symbol": symbol}
@@ -116,12 +116,12 @@ class NSELive:
     @live_cache
     def live_fno(self):
         return self.live_index("SECURITIES IN F&O")
-    
+
     @live_cache
     def pre_open_market(self, key="NIFTY"):
         data = {"key": key}
         return self.get("pre_open_market", data)
-    
+
     @live_cache
     def holiday_list(self):
         return self.get("holiday_list", {})
