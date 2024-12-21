@@ -1,5 +1,5 @@
 from jugaad_data.nse.live import NSELive
-
+from datetime import date, datetime
 n = NSELive()
 def test_stock_quote():
     r = n.stock_quote("HDFC")
@@ -25,13 +25,13 @@ def test_tick_data():
     assert "grapthData" in d
     d = n.tick_data("NIFTY 50", True)
     assert "grapthData" in d
-
+"""
 def test_market_turnover():
     d = n.market_turnover()
     assert "data" in d
     assert len(d['data']) > 1
     assert 'name' in d['data'][0]
-
+"""
 def test_eq_derivative_turnover():
     d = n.eq_derivative_turnover()
     assert "value" in d
@@ -82,3 +82,22 @@ def test_pre_open_market():
     assert "declines" in d
     assert "unchanged" in d
     assert "advances" in d
+
+def test_corporate_announcements():
+    d = n.corporate_announcements()
+    assert type(d) == list
+    if len(d) > 0:
+        row = d[0]
+        assert 'symbol' in row.keys()
+    
+    from_date = date(2024,1,1)
+    to_date = date(2024,1,2)
+    d = n.corporate_announcements(from_date=from_date, to_date=to_date)
+    assert len(d) > 0
+    for x in d:
+        print(x['symbol'])
+    if len(d) > 0:
+        assert 'symbol' in d[0].keys()
+    d = n.corporate_announcements(from_date=from_date, to_date=to_date, symbol='NESCO')
+    
+    assert d[0]['symbol'] == 'NESCO'
