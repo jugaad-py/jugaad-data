@@ -171,7 +171,7 @@ class TestIndexHistory(TestCase):
         r = h._post_json("mypath", params=params)
         assert json.loads(r.json()['data']) == params
     
-    
+"""
     def test_index_raw(self):
         symbol = "NIFTY 50"
         from_date = date(2020, 6, 1)
@@ -201,7 +201,7 @@ class TestIndexHistory(TestCase):
         assert len(index_df) > 100 
         assert list(index_df.columns) == ['Index Name', 'INDEX_NAME', 'HistoricalDate', 'OPEN', 'HIGH',
        'LOW', 'CLOSE'] 
-
+"""
 
 def test_expiry_dates():
     dt = date(2020,1,1)

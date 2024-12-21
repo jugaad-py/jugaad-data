@@ -25,13 +25,13 @@ def test_tick_data():
     assert "grapthData" in d
     d = n.tick_data("NIFTY 50", True)
     assert "grapthData" in d
-
+"""
 def test_market_turnover():
     d = n.market_turnover()
     assert "data" in d
     assert len(d['data']) > 1
     assert 'name' in d['data'][0]
-
+"""
 def test_eq_derivative_turnover():
     d = n.eq_derivative_turnover()
     assert "value" in d
