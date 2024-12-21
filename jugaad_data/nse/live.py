@@ -22,7 +22,8 @@ class NSELive:
             "equity_option_chain": "/option-chain-equities",
             "currency_option_chain": "/option-chain-currency",
             "pre_open_market": "/market-data-pre-open",
-            "holiday_list": "/holiday-master?type=trading"
+            "holiday_list": "/holiday-master?type=trading",
+            "corporate_announcements": "/corporate-announcements"
     }
     
     def __init__(self):
@@ -37,7 +38,7 @@ class NSELive:
             "sec-fetch-site": "same-origin",
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
             "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate, br",
+            "Accept-Encoding": "gzip, deflate",
             "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
@@ -125,3 +126,24 @@ class NSELive:
     @live_cache
     def holiday_list(self):
         return self.get("holiday_list", {})
+
+    def corporate_announcements(self, segment='equities', from_date=None, to_date=None, symbol=None):
+        """
+            This function returns the corporate annoucements 
+            (https://www.nseindia.com/companies-listing/corporate-filings-announcements)
+        """
+
+        #from_date: 02-12-2024
+        #to_date: 06-12-2024
+        #symbol: 
+        payload = {"index": segment}
+
+        if from_date and to_date:
+            payload['from_date'] = from_date.strftime("%d-%m-%Y")
+            payload['to_date']   = to_date.strftime("%d-%m-%Y")
+        elif from_date or to_date:
+            raise Exception("Please provide both from_date and to_date")
+        if symbol:
+            payload['symbol'] = symbol
+        return self.get("corporate_announcements", payload)
+
