@@ -1,5 +1,5 @@
 from jugaad_data.nse.live import NSELive
-
+from datetime import date, datetime
 n = NSELive()
 def test_stock_quote():
     r = n.stock_quote("HDFC")
@@ -82,3 +82,22 @@ def test_pre_open_market():
     assert "declines" in d
     assert "unchanged" in d
     assert "advances" in d
+
+def test_corporate_announcements():
+    d = n.corporate_announcements()
+    assert type(d) == list
+    if len(d) > 0:
+        row = d[0]
+        assert 'symbol' in row.keys()
+    
+    from_date = date(2024,1,1)
+    to_date = date(2024,1,2)
+    d = n.corporate_announcements(from_date=from_date, to_date=to_date)
+    assert len(d) > 0
+    for x in d:
+        print(x['symbol'])
+    if len(d) > 0:
+        assert 'symbol' in d[0].keys()
+    d = n.corporate_announcements(from_date=from_date, to_date=to_date, symbol='NESCO')
+    
+    assert d[0]['symbol'] == 'NESCO'
