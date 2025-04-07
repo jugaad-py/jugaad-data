@@ -105,7 +105,7 @@ def cached(app_name):
             path = os.path.join(cache_dir, file_name)
             if not os.path.isfile(path):    
                 if not os.path.exists(cache_dir):
-                    os.makedirs(cache_dir)
+                    os.makedirs(cache_dir, exist_ok=True)
                 j = function(**kw)
                 with open(path, 'wb') as fp:
                     pickle.dump(j, fp)        
