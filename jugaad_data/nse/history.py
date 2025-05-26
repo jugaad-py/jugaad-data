@@ -66,6 +66,7 @@ class NSEHistory:
             # self.s.get(url, verify=self.ssl_verify)
         path = self.path_map[path_name]
         url = urljoin(self.base_url, path)
+        print(url)
         # self.r = self.s.get(url, params=params, verify=self.ssl_verify)
         self.r = nsefetch(url)
         return self.r
