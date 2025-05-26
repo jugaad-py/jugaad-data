@@ -76,8 +76,27 @@ class NSEHistory:
             'to': to_date.strftime('%d-%m-%Y'),
             'series': '["{}"]'.format(series),
         }
+        
+        # Make the request
         self.r = self._get("stock_history", params)
-        j = self.r.json()
+        
+        # Validate response
+        if not self.r.ok:  # Checks for 4XX/5XX status
+            raise ValueError(f"NSE API Error {self.r.status_code}: {self.r.text[:200]}")
+        
+        if not self.r.content:
+            raise ValueError("Empty API response")
+        
+        try:
+            j = self.r.json()
+        except ValueError as e:
+            # Log the invalid response for debugging
+            print(f"Invalid JSON response: {self.r.text[:200]}")
+            raise ValueError(f"NSE returned invalid JSON: {e}") from e
+        
+        if 'data' not in j:
+            raise ValueError("Response missing 'data' key")
+        
         return j['data']
     
     
