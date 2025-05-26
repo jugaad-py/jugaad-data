@@ -60,15 +60,13 @@ class NSEHistory:
         self.ssl_verify = True
 
     def _get(self, path_name, params):
-        # if "nseappid" not in self.s.cookies:
-        #     path = self.path_map["equity_quote_page"]
-        #     url = urljoin(self.base_url, path)
-            # self.s.get(url, verify=self.ssl_verify)
+        if "nseappid" not in self.s.cookies:
+            path = self.path_map["equity_quote_page"]
+            url = urljoin(self.base_url, path)
+            self.s.get(url, verify=self.ssl_verify)
         path = self.path_map[path_name]
         url = urljoin(self.base_url, path)
-        print(url)
-        # self.r = self.s.get(url, params=params, verify=self.ssl_verify)
-        self.r = nsefetch(url)
+        self.r = self.s.get(url, params=params, verify=self.ssl_verify)
         return self.r
     
     @ut.cached(APP_NAME + '-stock')
