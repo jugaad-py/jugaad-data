@@ -10,6 +10,7 @@ import csv
 from pprint import pprint
 from urllib.parse import urljoin
 from requests import Session
+from nsepythonserver import nsefetch
 #from bs4 import BeautifulSoup
 import click
 try:
@@ -59,13 +60,14 @@ class NSEHistory:
         self.ssl_verify = True
 
     def _get(self, path_name, params):
-        if "nseappid" not in self.s.cookies:
-            path = self.path_map["equity_quote_page"]
-            url = urljoin(self.base_url, path)
-            self.s.get(url, verify=self.ssl_verify)
+        # if "nseappid" not in self.s.cookies:
+        #     path = self.path_map["equity_quote_page"]
+        #     url = urljoin(self.base_url, path)
+            # self.s.get(url, verify=self.ssl_verify)
         path = self.path_map[path_name]
         url = urljoin(self.base_url, path)
-        self.r = self.s.get(url, params=params, verify=self.ssl_verify)
+        # self.r = self.s.get(url, params=params, verify=self.ssl_verify)
+        self.r = nsefetch(url)
         return self.r
     
     @ut.cached(APP_NAME + '-stock')
