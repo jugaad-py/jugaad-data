@@ -20,26 +20,28 @@ jobs:
         run: echo "$GITHUB_CONTEXT"
       - uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
-          # Issue ref: https://github.com/actions/setup-python/issues/436
-          # cache: "pip"
+          python-version: "3.13"
+          cache: "pip"
           cache-dependency-path: pyproject.toml
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         id: cache
         with:
           path: ${{ env.pythonLocation }}
           key: ${{ runner.os }}-python-${{ env.pythonLocation }}-${{ hashFiles('pyproject.toml') }}-publish
       - name: Install build dependencies
         if: steps.cache.outputs.cache-hit != 'true'
-        run: pip install build
+        run: pip install build twine
       - name: Build distribution
         run: python -m build
+      - name: Verify package metadata
+        run: python -m twine check dist/*
       - name: Publish
-        uses: pypa/gh-action-pypi-publish@v1.8.10
+        uses: pypa/gh-action-pypi-publish@v1.13.0
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          verbose: true
       - name: Dump GitHub context
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
