@@ -28,7 +28,10 @@ def get_data(symbol, from_date, to_date, series):
 def test_cookie():
     r = h._get("equity_quote_page", params={})
     assert r.status_code == 200
-    assert "nseappid" in r.cookies
+    # NSE has changed their cookie system, now check for any of the new cookies
+    # that indicate successful session establishment
+    session_cookies = list(h.s.cookies.keys())
+    assert any(cookie in session_cookies for cookie in ['nsit', 'ak_bmsc', 'bm_sz', '_abck', 'bm_mi', 'bm_sv']), f"Expected session cookies not found. Got: {session_cookies}"
     symbol = "RELIANCE"
     from_date = date(2019,1,1)
     to_date = date(2019,1,31)
