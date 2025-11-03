@@ -174,6 +174,123 @@ class NSEIndicesArchives(NSEArchives):
             fp.write(text)
         return fname
 
+class NSEIndices:
+    """List of NSE indices"""
+
+    NIFTY_50 = "nifty50"
+    NIFTY_100 = "nifty100"
+    NIFTY_200 = "nifty200"
+    NIFTY_500 = "nifty500"
+
+    NIFTY_NEXT_50 = "niftynext50"
+
+    NIFTY_MIDCAP_50 = "niftymidcap50"
+    NIFTY_MIDCAP_100 = "niftymidcap100"
+    NIFTY_MIDCAP_150 = "niftymidcap150"
+
+    NIFTY_LARGEMIDCAP_250 = "niftylargemidcap250"
+    NIFTY_MIDSMALLCAP_400 = "niftymidsmallcap400"
+
+    NIFTY_SMALLCAP_50 = "niftysmallcap50"
+    NIFTY_SMALLCAP_100 = "niftysmallcap100"
+    NIFTY_SMALLCAP_250 = "niftysmallcap250"
+
+    NIFTY_MICROCAP_250 = "niftymicrocap250_"
+    NIFTY_MIDCAP_SELECT = "niftymidcapselect_"
+    NIFTY_TOTALMARKET = "niftytotalmarket_"
+
+    NIFTY_500_LARGEMIDSMALL_EQUALCAP_WEIGHTED = "nifty500LargeMidSmallEqualCapWeighted_"
+    NIFTY_500_MULTICAP_502525 = "nifty500Multicap502525_"
+
+    @classmethod
+    def get_indices_without_underscores(cls):
+        """Returns a list of indices without underscores"""
+        return [v for k, v in vars(cls).items() if (isinstance(v, str) and
+            v.startswith("nifty") and not v.startswith("__") and not v.endswith("_"))]
+
+    @classmethod
+    def get_indices_with_underscores(cls):
+        """Returns a list of indices with underscores"""
+        return [v for k, v in vars(cls).items() if (isinstance(v, str) and
+            v.startswith("nifty") and not v.startswith("__") and v.endswith("_"))]
+        
+class NSEIndexConstituents(NSEArchives):
+    """NSE Index constituents
+
+    https://niftyindices.com/indices/equity/broad-based-indices/NIFTY--50
+    Index constituent link
+    https://niftyindices.com/IndexConstituent/ind_nifty50list.csv
+
+    Args:
+        NSEArchives (class): Base class
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.base_url = "https://www.niftyindices.com"
+        self._routes = self._build_routes()
+        self.h = {
+          "Host": "www.niftyindices.com",
+          "Referer": "https://www.nseindia.com",
+          "X-Requested-With": "XMLHttpRequest",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+          "Accept": "*/*",
+          "Accept-Encoding": "gzip, deflate",
+          "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        }
+
+        self.s.headers.update(self.h)
+
+    def _build_routes(self) -> dict:
+        routes = {}
+
+        index_types = NSEIndices.get_indices_without_underscores(
+          ) + NSEIndices.get_indices_with_underscores()
+        for index_type in index_types:
+            routes[index_type] = f"/IndexConstituent/{self._index_file_name(index_type)}"
+
+        return routes
+
+    def _index_file_name(self, index_type: str) -> str:
+        index_types = NSEIndices.get_indices_without_underscores(
+          ) + NSEIndices.get_indices_with_underscores()
+        if index_type in index_types:
+            return f"ind_{index_type}list.csv"
+
+        raise ValueError(f"Invalid index type: {index_type}")
+
+    def index_constituent_raw(self, index_type=str):
+        """Downloads raw index constituent text for a specific index"""
+        r = self.get(index_type)
+        return r.text
+
+    def index_constituent_save(self, index_type:str, dest, skip_if_present=True):
+        """Downloads and saves index constituent csv for a specific index"""
+        fname = self._index_file_name(index_type)
+        fpath = os.path.join(dest, fname)
+        if os.path.isfile(fpath) and skip_if_present:
+            return fpath
+        text = self.index_constituent_raw(index_type)
+        with open(fpath, 'w') as fp:
+            fp.write(text)
+
+        return fpath
+
+    def index_constituent_save_all(self, dest, skip_if_present=True):
+        """Downloads and saves index constituent csv for all known indexes"""
+        fpaths = []
+
+        index_types = NSEIndices.get_indices_without_underscores(
+            ) + NSEIndices.get_indices_with_underscores()
+        for index_type in index_types:
+            fpath = self.index_constituent_save(index_type, dest, skip_if_present)
+            fpaths.append(fpath)
+
+        return fpaths
+    
 a = NSEArchives()
 bhavcopy_raw = a.bhavcopy_raw
 bhavcopy_save = a.bhavcopy_save
@@ -181,9 +298,15 @@ full_bhavcopy_raw = a.full_bhavcopy_raw
 full_bhavcopy_save = a.full_bhavcopy_save
 bhavcopy_fo_raw = a.bhavcopy_fo_raw
 bhavcopy_fo_save = a.bhavcopy_fo_save
+
 ia = NSEIndicesArchives()
 bhavcopy_index_raw = ia.bhavcopy_index_raw
 bhavcopy_index_save = ia.bhavcopy_index_save
+
+ic = NSEIndexConstituents()
+index_constituent_raw = ic.index_constituent_raw
+index_constituent_save = ic.index_constituent_save
+index_constituent_save_all = ic.index_constituent_save_all
 
 def expiry_dates(dt, instrument_type="", symbol="", contracts=0):
     txt = bhavcopy_fo_raw(dt)

@@ -51,6 +51,29 @@ from jugaad_data.nse import stock_df
 df = stock_df(symbol="SBIN", from_date=date(2020,1,1),
             to_date=date(2020,1,30), series="EQ")
 ```
+### Historical data (In Loop)
+If trying to download files in a loop, It is important to delete the object explicitly otherwise download does not work for next date when running in loop. Library creates session at object initialization time which gets reset when object is deleted and thus NSE server do not treat next call as bot call.
+
+```python
+from datetime import date
+from jugaad_data.nse import full_bhavcopy_save
+from time import sleep
+
+for m_date in [date(2021,1,1), date(2021,1,2), date(2021,1,3)]:
+  # Create new object for each call
+  full_bhavcopy_save = jugaad_data_nse.full_bhavcopy_save
+
+  # Download full bhavdata
+  full_bhavcopy_save(m_date, "/path/to/directory")
+
+  # Very important else second download does not happen. Clear session and create new one
+  del full_bhavcopy_save
+
+  # Sleep to avoid getting blocked on NSE server
+  sleep(5)
+```
+Note: Full bhavdata download is not available prior to October 2019.
+
 ### Live data
 
 ```python
