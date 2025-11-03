@@ -1,0 +1,43 @@
+name: Version Check
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+    
+    - name: Check if version exists on PyPI
+      run: |
+        # Extract version from pyproject.toml
+        VERSION=$(python -c "
+        import tomllib
+        with open('pyproject.toml', 'rb') as f:
+            data = tomllib.load(f)
+        print(data['project']['version'])
+        ")
+        
+        echo "Current version: $VERSION"
+        
+        # Check PyPI
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/jugaad-data/$VERSION/json")
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "❌ ERROR: Version $VERSION already exists on PyPI!"
+          echo "Please update the version in pyproject.toml"
+          exit 1
+        elif [ "$HTTP_STATUS" = "404" ]; then
+          echo "✅ Version $VERSION is available on PyPI"
+        else
+          echo "⚠️  Warning: Could not verify PyPI status (HTTP $HTTP_STATUS)"
+        fi
