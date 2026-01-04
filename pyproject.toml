@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "jugaad-data"
 version = "0.28"
-requires-python = ">= 3.6"
+requires-python = ">= 3.9"
 authors = [{name = "jugaad-coder", email = "abc@xyz.com"}]
 description = "Free Zerodha API python library"
 readme = "README.md"

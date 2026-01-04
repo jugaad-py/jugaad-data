@@ -1,5 +1,5 @@
-requests
-click==7.1.2
-appdirs==1.4.4
-beautifulsoup4==4.9.3
-
+requests>=2.25.0
+click>=7.1.2
+appdirs>=1.4.4
+beautifulsoup4>=4.9.3
+lxml>=4.6.0
