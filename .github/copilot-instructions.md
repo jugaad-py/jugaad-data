@@ -72,5 +72,5 @@ Tests are important while development. Whenever you add/update a functionality, 
 * Implement the tests for the same
 * Verify tests are passing
 * Update the documentation
-* Update the library version
+* Increment the library version in `pyproject.toml`
 * Push the changes to git repository with relevant commit messages 
