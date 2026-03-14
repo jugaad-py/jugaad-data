@@ -65,13 +65,62 @@ Tests are important while development. Whenever you add/update a functionality, 
   - `test_util.py`: Tests for utilities.
 
 # Developer workflow
-* Take the requirement from the user
-* Read the existing codebase and understand where does this requirement fit best
-* Discuss and refine the requirement with user
-* Create a separate git branch for the requirement
-* Implement the requirement/functionality
-* Implement the tests for the same
-* Verify tests are passing
-* Update the documentation
-* Increment the library version in `pyproject.toml`
-* Push the changes to git repository with relevant commit messages 
+
+**IMPORTANT**: Follow these steps in EXACT sequence. Do NOT skip or reorder steps without explicit discussion with the user. Each step builds on the previous one.
+
+1. **Take the requirement from the user**
+   - Listen carefully and document the requirement clearly
+   - Ask clarifying questions if ambiguous
+
+2. **Discuss and refine the requirement WITH the user**
+   - Clarify scope, expected behavior, edge cases
+   - Get alignment before writing any code
+   - Document the refined requirement
+
+3. **Read the existing codebase**
+   - Now that the requirement is clear, explore the relevant modules
+   - Understand where this requirement fits best
+   - Identify potential conflicts or dependencies
+
+4. **Create a separate git branch for the requirement**
+   - Use descriptive branch name (e.g., `feature/add-xyz` or `fix/issue-xyz`)
+   - Ensure you're on the correct base branch before branching
+
+5. **Implement the requirement/functionality**
+   - Write clean, documented code following project conventions
+   - Consider error handling and edge cases
+
+6. **Write tests DURING implementation (not after)**
+   - Add unit tests alongside the code
+   - Aim for meaningful test coverage of the functionality
+   - Tests should cover both happy path and edge cases
+
+7. **Verify all tests are passing**
+   - Run the full test suite: `pytest`
+   - Ensure both new and existing tests pass
+   - No skipped tests without justification
+
+8. **Update the documentation**
+   - Update relevant docs in `docs/` folder
+   - Update `README.md` if applicable
+   - Add docstrings to new functions/classes
+   - Include examples for user-facing features
+
+9. **Update CHANGELOG**
+   - Add entry describing what changed
+   - Use clear, user-friendly language
+
+10. **Increment the library version in `pyproject.toml`**
+    - Follow semantic versioning (major.minor.patch)
+    - Patch: bug fixes
+    - Minor: new features (backward compatible)
+    - Major: breaking changes
+
+11. **Push changes to git repository**
+    - Use clear, descriptive commit messages
+    - Each commit should be logically atomic
+    - Format: `[Type] Short description` e.g., `[Feature] Add live data fetching for BSE` or `[Fix] Handle missing data edge case`
+
+12. **Create a Pull Request (if applicable)**
+    - Link to the original issue/requirement
+    - Include summary of changes in PR description
