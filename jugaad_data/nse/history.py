@@ -29,24 +29,25 @@ class NSEHistory:
     def __init__(self):
         
         self.headers = {
-            "Host": "www.nseindia.com",
-            "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
-            "X-Requested-With": "XMLHttpRequest",
+            "accept": "*/*",
+            "accept-encoding": "deflate, br, zstd",
+            "accept-language": "en-IN,en-US;q=0.9,en-GB;q=0.8,en;q=0.7",
+            "cache-control": "no-cache",
             "pragma": "no-cache",
+            "priority": "u=1, i",
+            "referer": "https://www.nseindia.com/report-detail/eq_security",
+            "sec-ch-ua": '"Not(A:Brand";v="8", "Chromium";v="144", "Google Chrome";v="144"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"macOS"',
             "sec-fetch-dest": "empty",
             "sec-fetch-mode": "cors",
             "sec-fetch-site": "same-origin",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
-            "Accept": "*/*",
-            "Accept-Encoding": "gzip, deflate",
-            "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36"
             }
         self.path_map = {
-            "stock_history": "/api/historical/cm/equity",
+            "stock_history": "/api/historicalOR/generateSecurityWiseHistoricalData",
             "derivatives": "/api/historical/fo/derivatives",
-            "equity_quote_page": "/get-quotes/equity",
+            "equity_quote_page": "/report-detail/eq_security",
         }
         self.base_url = "https://www.nseindia.com"
         self.cache_dir = ".cache"
@@ -59,7 +60,8 @@ class NSEHistory:
         self.ssl_verify = True
 
     def _get(self, path_name, params):
-        if "nseappid" not in self.s.cookies:
+        # Fetch cookies from the report page to maintain session
+        if not self.s.cookies:
             path = self.path_map["equity_quote_page"]
             url = urljoin(self.base_url, path)
             self.s.get(url, verify=self.ssl_verify)
@@ -74,7 +76,8 @@ class NSEHistory:
             'symbol': symbol,
             'from': from_date.strftime('%d-%m-%Y'),
             'to': to_date.strftime('%d-%m-%Y'),
-            'series': '["{}"]'.format(series),
+            'type': 'priceVolumeDeliverable',
+            'series': series if series != "EQ" else "ALL"
         }
         self.r = self._get("stock_history", params)
         j = self.r.json()
@@ -127,21 +130,26 @@ stock_select_headers = [  "CH_TIMESTAMP", "CH_SERIES",
                     "CH_OPENING_PRICE", "CH_TRADE_HIGH_PRICE",
                     "CH_TRADE_LOW_PRICE", "CH_PREVIOUS_CLS_PRICE",
                     "CH_LAST_TRADED_PRICE", "CH_CLOSING_PRICE",
-                    "VWAP", "CH_52WEEK_HIGH_PRICE", "CH_52WEEK_LOW_PRICE",
+                    "VWAP", 
                     "CH_TOT_TRADED_QTY", "CH_TOT_TRADED_VAL", "CH_TOTAL_TRADES",
+                    "COP_DELIV_QTY", "COP_DELIV_PERC",
                     "CH_SYMBOL"]
 stock_final_headers = [   "DATE", "SERIES",
                     "OPEN", "HIGH",
                     "LOW", "PREV. CLOSE",
                     "LTP", "CLOSE",
-                    "VWAP", "52W H", "52W L",
-                    "VOLUME", "VALUE", "NO OF TRADES", "SYMBOL"]
+                    "VWAP", 
+                    "VOLUME", "VALUE", "NO OF TRADES",
+                    "DELIVERY QTY", "DELIVERY %",
+                    "SYMBOL"]
 stock_dtypes = [  ut.np_date,  str,
             ut.np_float, ut.np_float,
             ut.np_float, ut.np_float,
             ut.np_float, ut.np_float,
-            ut.np_float, ut.np_float, ut.np_float,
-            ut.np_int, ut.np_float, ut.np_int, str]
+            ut.np_float, 
+            ut.np_int, ut.np_float, ut.np_int,
+            ut.np_int, ut.np_float,
+            str]
    
 def stock_csv(symbol, from_date, to_date, series="EQ", output="", show_progress=True):
     if show_progress:
@@ -279,7 +287,12 @@ class NSEIndexHistory(NSEHistory):
             "Host": "niftyindices.com",
             "Referer": "niftyindices.com",
             "X-Requested-With": "XMLHttpRequest",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36",
+            "User-Agent": "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6998.166 Safari/537.36",
+            "Sec-CH-UA": '"Google Chrome";v="134", "Chromium";v="134", "Not?A_Brand";v="99"',
+            "Sec-CH-UA-Mobile": "?0",
+            "Sec-CH-UA-Platform": '"Windows"',
+            "DNT": "1",
+            "Upgrade-Insecure-Requests": "1",
             "Origin": "https://niftyindices.com",
             "Accept": "*/*",
             "Accept-Encoding": "gzip, deflate",
