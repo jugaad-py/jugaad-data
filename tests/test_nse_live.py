@@ -1,5 +1,11 @@
 from jugaad_data.nse.live import NSELive
 from datetime import date, datetime
+from unittest.mock import patch
+from .fixtures_option_chain import (
+    NIFTY_OPTION_CHAIN_MOCK,
+    RELIANCE_OPTION_CHAIN_MOCK,
+    USDINR_OPTION_CHAIN_MOCK
+)
 n = NSELive()
 def test_stock_quote():
     r = n.stock_quote("HDFC")
@@ -57,21 +63,24 @@ def test_live_index():
     assert len(d['data']) == 51
 
 def test_index_option_chain():
-    d = n.index_option_chain("NIFTY")
-    assert "filtered" in d
-    assert "records" in d
+    with patch.object(n, 'get', return_value=NIFTY_OPTION_CHAIN_MOCK):
+        d = n.index_option_chain("NIFTY")
+        assert "filtered" in d
+        assert "records" in d
 
 def test_equities_option_chain():
-    d = n.equities_option_chain("RELIANCE")
-    assert "filtered" in d
-    assert "records" in d
-    assert "data" in d["records"]
+    with patch.object(n, 'get', return_value=RELIANCE_OPTION_CHAIN_MOCK):
+        d = n.equities_option_chain("RELIANCE")
+        assert "filtered" in d
+        assert "records" in d
+        assert "data" in d["records"]
 
 def test_currency_option_chain():
-    d = n.currency_option_chain("USDINR")
-    assert "filtered" in d
-    assert "records" in d
-    assert "data" in d["records"]
+    with patch.object(n, 'get', return_value=USDINR_OPTION_CHAIN_MOCK):
+        d = n.currency_option_chain("USDINR")
+        assert "filtered" in d
+        assert "records" in d
+        assert "data" in d["records"]
 
 def test_live_fno():
     d = n.live_fno()
