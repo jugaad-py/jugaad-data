@@ -121,6 +121,11 @@ Tests are important while development. Whenever you add/update a functionality, 
     - Each commit should be logically atomic
     - Format: `[Type] Short description` e.g., `[Feature] Add live data fetching for BSE` or `[Fix] Handle missing data edge case`
 
-12. **Create a Pull Request (if applicable)**
-    - Link to the original issue/requirement
-    - Include summary of changes in PR description
+12. **Create a Pull Request using GitHub CLI**
+    - Use: `gh pr create --title "..." --body "..."`
+    - Title format: `[Type] Short description` (same as commit message)
+    - Include in body:
+      - Summary of changes
+      - Link to original issue/requirement (if applicable)
+      - Any testing notes or breaking changes
+    - Example: `gh pr create --title "[Docs] Refined developer workflow" --body "Updates the developer workflow with explicit step sequence."`
