@@ -83,7 +83,8 @@ Tests are important while development. Whenever you add/update a functionality, 
    - Identify potential conflicts or dependencies
 
 4. **Create a separate git branch for the requirement**
-   - Use descriptive branch name (e.g., `feature/add-xyz` or `fix/issue-xyz`)
+   - Use descriptive branch name that matches the problem you're solving (e.g., `feature/add-xyz` or `fix/issue-xyz`)
+   - Branch name should clearly indicate what problem/feature it addresses
    - Ensure you're on the correct base branch before branching
 
 5. **Implement the requirement/functionality**
@@ -129,3 +130,16 @@ Tests are important while development. Whenever you add/update a functionality, 
       - Link to original issue/requirement (if applicable)
       - Any testing notes or breaking changes
     - Example: `gh pr create --title "[Docs] Refined developer workflow" --body "Updates the developer workflow with explicit step sequence."`
+
+## General Guidelines
+
+- **Debug/Test Scripts**: It's acceptable to create temporary debug or test scripts (e.g., `debug_test.py`, `test_xyz.py`) during development to verify solutions and experiment. However, once you've found your solution and tested the changes:
+  - Remove all temporary debug/test scripts from the repository
+  - Only commit production code and proper unit tests in `tests/` folder
+  - Do NOT commit debug scripts with your changes
+
+- **Branch Naming**: Always ensure your branch name clearly reflects the problem you're solving:
+  - Feature: `feature/add-live-data-bse`
+  - Fix: `fix/handle-missing-data`
+  - Docs: `docs/update-api-reference`
+  - The branch name should be immediately understandable to anyone reviewing the PR
