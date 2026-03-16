@@ -167,6 +167,62 @@ class TestDerivatives(TestCase):
     def setUp(self):
         setup_test(self)
     
+    def test_derivatives_raw_futures(self):
+        """Test fetching futures derivatives data"""
+        symbol = "NIFTY"
+        from_date = date(2026, 3, 9)
+        to_date = date(2026, 3, 16)
+        expiry_date = date(2026, 3, 30)
+        instrument_type = "FUTIDX"
+        
+        raw = nse.derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type,
+                                  strike_price=None, option_type=None)
+        assert len(raw) > 0
+        # Verify required fields for futures
+        assert 'FH_TIMESTAMP' in raw[0]
+        assert 'FH_SYMBOL' in raw[0]
+        assert 'FH_CLOSING_PRICE' in raw[0]
+        assert raw[0]['FH_SYMBOL'] == symbol
+    
+    def test_derivatives_raw_options(self):
+        """Test fetching options derivatives data"""
+        symbol = "NIFTY"
+        from_date = date(2026, 3, 9)
+        to_date = date(2026, 3, 16)
+        expiry_date = date(2026, 3, 30)
+        instrument_type = "OPTIDX"
+        strike_price = 23000
+        option_type = "PE"
+        
+        raw = nse.derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, 
+                                   strike_price=strike_price, option_type=option_type)
+        assert len(raw) > 0
+        # Verify required fields for options
+        assert 'FH_TIMESTAMP' in raw[0]
+        assert 'FH_OPTION_TYPE' in raw[0]
+        assert 'FH_STRIKE_PRICE' in raw[0]
+        assert raw[0]['FH_OPTION_TYPE'] == option_type
+        assert raw[0]['FH_STRIKE_PRICE'] == strike_price
+    
+    def test_derivatives_df(self):
+        """Test fetching derivatives as dataframe"""
+        symbol = "NIFTY"
+        from_date = date(2026, 3, 9)
+        to_date = date(2026, 3, 16)
+        expiry_date = date(2026, 3, 30)
+        instrument_type = "OPTIDX"
+        strike_price = 23000
+        option_type = "PE"
+        
+        df = nse.derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type,
+                               strike_price=strike_price, option_type=option_type)
+        assert len(df) > 0
+        # Verify required columns for options
+        assert 'DATE' in df.columns
+        assert 'EXPIRY' in df.columns
+        assert 'STRIKE PRICE' in df.columns
+        assert 'OPTION TYPE' in df.columns
+        assert 'CLOSE' in df.columns
 
 class TestIndexHistory(TestCase):
     def setUp(self):
