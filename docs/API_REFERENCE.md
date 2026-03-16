@@ -385,6 +385,12 @@ Download derivatives data and save to CSV.
 - Same as `derivatives_df()`
 - `output` (str): Path for output CSV file
 
+**Note on Historical Data:**
+- As of v0.34.0+, the derivatives API endpoint has been updated to use NSE's new `/api/historicalOR/foCPV` endpoint
+- Historical data is available for recent periods (typically current and past few months)
+- Data availability depends on NSE's data retention policies
+- For very old historical data (prior to ~6 months), data may not be available
+
 ### NSE Daily Reports
 
 #### `list_available_reports()`
