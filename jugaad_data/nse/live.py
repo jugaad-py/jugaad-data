@@ -18,8 +18,8 @@ class NSELive:
             "equity_derivative_turnover": "/equity-stock",
             "all_indices": "/allIndices",
             "live_index": "/equity-stockIndices",
-            "index_option_chain": "/option-chain-indices",
-            "equity_option_chain": "/option-chain-equities",
+            "option_chain_v3": "/option-chain-v3",
+            "option_chain_contract_info": "/option-chain-contract-info",
             "currency_option_chain": "/option-chain-currency",
             "pre_open_market": "/market-data-pre-open",
             "holiday_list": "/holiday-master?type=trading",
@@ -105,14 +105,54 @@ class NSELive:
         return self.get("live_index", data)
     
     @live_cache
-    def index_option_chain(self, symbol="NIFTY"):
+    def option_chain_contract_info(self, symbol):
+        """Get available expiry dates and strike prices for an option chain symbol."""
         data = {"symbol": symbol}
-        return self.get("index_option_chain", data)
+        return self.get("option_chain_contract_info", data)
 
     @live_cache
-    def equities_option_chain(self, symbol):
-        data = {"symbol": symbol}
-        return self.get("equity_option_chain", data)
+    def index_option_chain(self, symbol="NIFTY", expiry=None):
+        """Fetch option chain data for index.
+        
+        Args:
+            symbol: Index symbol (e.g., 'NIFTY', 'BANKNIFTY')
+            expiry: Optional expiry date in format 'DD-MMM-YYYY' (e.g., '30-Mar-2026')
+                   If not provided, fetches contract info to get the nearest expiry
+        """
+        # If expiry is not provided, get the nearest one
+        if not expiry:
+            contract_info = self.option_chain_contract_info(symbol)
+            if contract_info.get("expiryDates"):
+                expiry = contract_info["expiryDates"][0]
+        
+        # Fetch option chain data
+        data = {"type": "Indices", "symbol": symbol}
+        if expiry:
+            data["expiry"] = expiry
+        
+        return self.get("option_chain_v3", data)
+
+    @live_cache
+    def equities_option_chain(self, symbol, expiry=None):
+        """Fetch option chain data for equity.
+        
+        Args:
+            symbol: Stock symbol (e.g., 'RELIANCE', 'INFY')
+            expiry: Optional expiry date in format 'DD-MMM-YYYY' (e.g., '27-Mar-2026')
+                   If not provided, fetches contract info to get the nearest expiry
+        """
+        # If expiry is not provided, get the nearest one
+        if not expiry:
+            contract_info = self.option_chain_contract_info(symbol)
+            if contract_info.get("expiryDates"):
+                expiry = contract_info["expiryDates"][0]
+        
+        # Fetch option chain data
+        data = {"type": "Equity", "symbol": symbol}
+        if expiry:
+            data["expiry"] = expiry
+        
+        return self.get("option_chain_v3", data)
 
     @live_cache
     def currency_option_chain(self, symbol="USDINR"):
