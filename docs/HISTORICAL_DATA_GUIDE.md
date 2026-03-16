@@ -18,6 +18,21 @@ A comprehensive guide to downloading historical market data using `jugaad-data`.
 
 Bhavcopies are complete daily market snapshots published by stock exchanges after market close. They contain all traded contracts with their OHLC prices.
 
+### Format Changes (July 8, 2024)
+
+On July 8, 2024, NSE transitioned from the old ZIP-based bhavcopy format to the **Unified Distilled File Format (UDiff)**. The library now automatically handles both formats:
+
+- **Recent Dates (≥ July 8, 2024):** Uses UDiff format from NSE's daily-reports API
+  - Format: More comprehensive data structure
+  - Availability: Current day + previous trading day (via API)
+  
+- **Historical Dates (< July 8, 2024):** Uses BHAVDATA-FULL format
+  - Format: CSV with delivery information
+  - Availability: All historical dates
+  - No ZIP decompression required
+
+**No action needed on your part** - the library automatically chooses the best available format!
+
 ### Types of Bhavcopies
 
 1. **Equity Bhavcopy** - All equity securities traded on NSE
@@ -31,23 +46,38 @@ Bhavcopies are complete daily market snapshots published by stock exchanges afte
 from datetime import date
 from jugaad_data.nse import bhavcopy_save
 
-# Download for specific date
+# Download for specific date (works for all dates, automatic format selection)
 bhavcopy_save(date(2020, 1, 1), "/path/to/directory")
+bhavcopy_save(date(2024, 9, 15), "/path/to/directory")  # Uses UDiff if API available, else BHAVDATA-FULL
 
 # Download for date range
-for d in range(1, 31):
+from datetime import timedelta
+start_date = date(2024, 1, 1)
+end_date = date(2024, 12, 31)
+current = start_date
+while current <= end_date:
     try:
-        bhavcopy_save(date(2020, 1, d), "/path/to/directory")
+        bhavcopy_save(current, "/path/to/directory")
+        print(f"Downloaded bhavcopy for {current}")
     except:
         pass  # Holiday or weekend
+    current += timedelta(days=1)
 ```
 
-**Output file:** `cm01Jan2020bhav.csv`
+**Output file:** `cm01Jan2020bhav.csv` or `cm15Sep2024bhav.csv`
 
 **CSV Columns:**
+For historical dates (BHAVDATA-FULL format):
 ```
-SYMBOL, SERIES, OPEN, HIGH, LOW, CLOSE, LAST, PREVCLOSE, TOTTRDQTY, 
-TOTTRDVAL, DATE, TOTTRNUM, ISIN
+SYMBOL, SERIES, DATE, PREV_CLOSE, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, 
+LAST_PRICE, CLOSE_PRICE, AVG_PRICE, TTL_TRD_QNTY, TURNOVER_LACS, 
+NO_OF_TRADES, DELIV_QTY, DELIV_PER
+```
+
+For recent dates (UDiff format):
+```
+TradDt, BizDt, Sgmt, Src, FinInstrmTp, FinInstrmId, ISIN, TckrSymb, 
+SctySrs, XpryDt, ... (enhanced data structure)
 ```
 
 ### Download Full Bhavcopy (with Delivery Data)
@@ -62,6 +92,58 @@ full_bhavcopy_save(date(2020, 1, 1), "/path/to/directory")
 **Additional columns in full bhavcopy:**
 ```
 Delivery Quantity %
+```
+
+### Download Other NSE Reports (39+ types available)
+
+The library now provides access to 39+ NSE reports through the daily-reports API:
+
+#### List Available Reports
+
+```python
+from jugaad_data.nse import NSEArchives
+
+nse = NSEArchives()
+
+# See all available reports
+reports = nse.list_available_reports()
+
+for file_key, info in reports.items():
+    print(f"{file_key}: {info['displayName']}")
+    print(f"  Available dates: {[d['date'] for d in info['dates']]}")
+```
+
+#### Download Specific Reports
+
+```python
+from jugaad_data.nse import NSEArchives
+
+nse = NSEArchives()
+
+# Download volatility data
+info = nse.download_report('CM-VOLATILITY', "/path/to/save")
+print(f"Downloaded: {info['file_name']}")
+print(f"Trading date: {info['trading_date']}")
+
+# Other available reports:
+# 'CM-UDIFF-BHAVCOPY-CSV'   - UDiff format bhavcopy (zip)
+# 'CM-BULK-DEAL'            - Bulk deals data
+# 'CM-BLOCK-DEAL'           - Block deals data
+# 'CM-SHORT-SELLING'        - Short selling data
+# 'CM-VOLATILITY'           - Daily volatility
+# 'CM-CIRCUIT'              - Circuit breaker updates
+# ... and 33+ more report types
+```
+
+**Return Value:**
+```python
+{
+    'file_path': '/path/to/save/filename.csv',  # Local file path
+    'file_name': 'CMVOLT_13032026.CSV',         # Actual file name from NSE
+    'trading_date': '13-Mar-2026',              # Trading date of report
+    'size': '292.78 KB',                        # File size
+    'cached': False                             # Whether file was cached
+}
 ```
 
 ### Download F&O Bhavcopy

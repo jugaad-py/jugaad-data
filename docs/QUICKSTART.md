@@ -178,6 +178,31 @@ Output includes:
 - Government Securities rates
 - Index values (Sensex, Nifty 50)
 
+### Download NSE Daily Reports (39+ Report Types)
+
+NSE publishes 39+ different reports daily including volatility data, advance/decline data, and more.
+
+```python
+from jugaad_data.nse import list_available_reports, download_report
+
+# Discover all available reports
+reports = list_available_reports()
+for report in reports[:5]:  # Show first 5
+    print(f"{report['key']}: {report['name']}")
+
+# Download a specific report (e.g., CM Volatility)
+download_report("CM-VOLATILITY", output="cm_volatility.csv")
+
+# Download another report type
+download_report("NIFTY-50-ADVANCE-DECLINE", output="nifty_advance_decline.csv")
+```
+
+Available reports include:
+- CM-VOLATILITY: Equity segment volatility measures
+- NIFTY-50-ADVANCE-DECLINE: NIFTY 50 advance/decline statistics
+- NIFTY-NEXT-50-ADVANCE-DECLINE: NIFTY Next 50 statistics
+- And 36+ more report types
+
 ### Command Line Interface
 
 ```bash
@@ -226,6 +251,7 @@ $ jdata derivatives -s NIFTY -f 2020-01-01 -t 2020-01-23 -e 2020-01-23 -i OPTIDX
 ✅ Fetch live index and turnover data
 ✅ Fetch option chains
 ✅ Fetch current rates from RBI website
+✅ Download 39+ NSE daily reports (volatility, advance/decline, etc.)
 ✅ Pandas dataframe support
 ✅ Command-line interface
 
