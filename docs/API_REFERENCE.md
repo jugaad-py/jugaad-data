@@ -356,6 +356,51 @@ Download derivatives data and save to CSV.
 - Same as `derivatives_df()`
 - `output` (str): Path for output CSV file
 
+### NSE Daily Reports
+
+#### `list_available_reports()`
+Discover all available daily reports from NSE.
+
+**Parameters:** None
+
+**Returns:**
+```python
+list  # List of dictionaries with 'key' and 'name' for each report
+```
+
+**Example:**
+```python
+from jugaad_data.nse import list_available_reports
+
+reports = list_available_reports()
+# Returns: [{'key': 'CM-VOLATILITY', 'name': 'CM Volatility'}, ...]
+```
+
+#### `download_report(report_key, to_date=None, output=None)`
+Download any NSE daily report (39+ report types available).
+
+**Parameters:**
+- `report_key` (str): Report key (e.g., "CM-VOLATILITY", "NIFTY-50-ADVANCE-DECLINE")
+- `to_date` (datetime.date, optional): Date for report (defaults to NSE current date)
+- `output` (str, optional): Path for output file
+
+**Returns:** File saved at `output` path or temp directory
+
+**Example:**
+```python
+from jugaad_data.nse import download_report
+
+# List available reports first
+download_report("CM-VOLATILITY", output="/path/to/file.csv")
+```
+
+#### `stock_df(symbol, from_date, to_date)` - Format Note
+As of July 8, 2024, NSE transitioned from direct CSV format to compressed UDiff format. The library handles this automatically:
+- Dates >= July 8, 2024: Returns UDiff format (newer column structure)
+- Historical dates: Falls back to BHAVDATA-FULL format
+
+Both formats are returned as raw CSV data with no column mapping. See [HISTORICAL_DATA_GUIDE](HISTORICAL_DATA_GUIDE.md) for detailed column specifications.
+
 ---
 
 ## BSE Module
