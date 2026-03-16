@@ -5,13 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.31.2] - 2026-03-14
-
-### Fixed
-- Fixed issue #112: NSE option chain tests failing due to empty API responses during market closure
-- Implemented mocking for option chain tests to be market-hours independent
-- Tests now use realistic fixture data instead of depending on live API responses
-
 ## [0.31.1] - 2026-03-14
 
 ### Changed
