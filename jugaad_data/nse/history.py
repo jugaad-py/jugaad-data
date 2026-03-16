@@ -46,7 +46,7 @@ class NSEHistory:
             }
         self.path_map = {
             "stock_history": "/api/historicalOR/generateSecurityWiseHistoricalData",
-            "derivatives": "/api/historical/fo/derivatives",
+            "derivatives": "/api/historicalOR/foCPV",
             "equity_quote_page": "/report-detail/eq_security",
         }
         self.base_url = "https://www.nseindia.com"
@@ -95,7 +95,8 @@ class NSEHistory:
             'from': from_date.strftime('%d-%m-%Y'),
             'to': to_date.strftime('%d-%m-%Y'),
             'expiryDate': expiry_date.strftime('%d-%b-%Y').upper(),
-            'instrumentType': instrument_type
+            'instrumentType': instrument_type,
+            'year': from_date.year
             }
         if "OPT" in instrument_type:
             if not(strike_price and option_type):
