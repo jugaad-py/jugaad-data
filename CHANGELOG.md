@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0] - 2026-03-16
+
+### Added
+- New `NSEDailyReports` class to handle NSE daily-reports API (39+ report types)
+- `NSEArchives.download_report()` method to download any NSE report by file key
+- `NSEArchives.list_available_reports()` method to discover available report types
+- Hybrid bhavcopy format support: UDiff (recent) + BHAVDATA-FULL (historical)
+- Tests for new report discovery and download functionality
+
+### Fixed
+- Issue #81: NSE bhavcopy downloads failing for dates >= July 8, 2024 (BadZipFile error)
+- Issue #83: Bhavcopy format change - implemented automatic fallback to BHAVDATA-FULL
+- Bhavcopy now works for all dates using hybrid approach:
+  - Recent dates (Jul 8, 2024+): Uses new UDiff format from daily-reports API
+  - Historical dates: Uses BHAVDATA-FULL format (available for all dates)
+
+### Changed
+- `bhavcopy_raw()` now automatically handles both UDiff and BHAVDATA-FULL formats
+- Data returned as-is per NSE updates (no backward compatibility guarantee)
+
 ## [0.31.2] - 2026-03-16
 
 ### Fixed
