@@ -134,19 +134,48 @@ Get detailed trade information for a stock.
 }
 ```
 
-#### `stock_quote_fno(symbol)`
-Get futures and options quotes for a stock.
+#### `stock_quote_fno(symbol)` - [BREAKING CHANGE v0.33]
+Get futures and options quotes for a symbol.
 
 **Parameters:**
-- `symbol` (str): Stock symbol
+- `symbol` (str): Stock or index symbol (e.g., 'RELIANCE', 'NIFTY')
 
 **Returns:**
 ```python
 {
-    'stocks': list,              # List of all F&O contracts
-    # Each contract contains metadata and market depth
+    'data': [
+        {
+            'identifier': 'FUTSTKRELIANCE30-Mar-2026XX0.00',
+            'instrumentType': 'FUTSTK',           # FUTSTK (Futures) or OPTSTK (Options)
+            'underlying': 'RELIANCE',
+            'expiryDate': '30-Mar-2026',
+            'optionType': 'XX',                  # XX (Futures), CE (Call), PE (Put)
+            'strikePrice': '0.00',
+            'lastPrice': 2850.5,
+            'change': 15.2,
+            'pchange': 0.54,
+            'openPrice': 2835.0,
+            'highPrice': 2860.0,
+            'lowPrice': 2820.0,
+            'closePrice': 2835.3,
+            'prevClose': 2835.3,
+            'totalTradedVolume': 45678,
+            'totalTurnover': 1296789420,
+            'openInterest': 123456,
+            'changeinOpenInterest': 1234,
+            'pchangeinOpenInterest': 1.01,
+            'underlyingValue': 2850.5,
+            'volumeFreezeQuantity': 240001,
+            'ticksize': 0.05,
+            ...other fields
+        },
+        ...more contracts
+    ],
+    'timestamp': '16-Mar-2026 15:30:00'
 }
 ```
+
+**Note:** Response includes all available contracts (futures + all expiries of calls and puts) for the given symbol.
 
 ### Option Chains
 

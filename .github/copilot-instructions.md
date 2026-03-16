@@ -23,6 +23,20 @@ $ source env/bin/activate
 # Running tests
 Tests are important while development. Whenever you add/update a functionality, ensure you add tests for the same. We are using `pytest` for testing.
 
+# GitHub CLI Usage
+Use GitHub CLI (`gh`) to interact with GitHub for fetching issues, PRs, and project information:
+
+- **Fetch an issue by number**: `gh issue view <issue-number>`
+- **List open issues**: `gh issue list --state open`
+- **List closed issues**: `gh issue list --state closed`
+- **Search issues by label**: `gh issue list --label "<label>"`
+- **Fetch a specific PR**: `gh pr view <pr-number>`
+- **List open PRs**: `gh pr list --state open`
+- **Create a PR**: `gh pr create --title "..." --body "..."`
+- **View PR details with comments**: `gh pr view <pr-number> --comments`
+
+Always use `gh` instead of manually browsing GitHub when you need to reference issues or PRs.
+
 # Project structure
 
 - `blog_run_test.sh`: Shell script for running tests in a blog context.
@@ -71,6 +85,7 @@ Tests are important while development. Whenever you add/update a functionality, 
 1. **Take the requirement from the user**
    - Listen carefully and document the requirement clearly
    - Ask clarifying questions if ambiguous
+   - If referring to a GitHub issue/PR, use `gh issue view <number>` or `gh pr view <number>` to fetch full details
 
 2. **Discuss and refine the requirement WITH the user**
    - Clarify scope, expected behavior, edge cases

@@ -387,45 +387,79 @@ contract = turnover['value'][0]
 ### Futures and Options Quote for Stock
 
 ```python
-# Get all F&O contracts for a stock
-quotes = n.stock_quote_fno("HDFC")
+# Get all F&O contracts for a symbol (includes all expiries and strikes)
+fno_data = n.stock_quote_fno("RELIANCE")
 
-# List all contracts with prices
-for quote in quotes['stocks']:
-    identifier = quote['metadata']['identifier']
-    last_price = quote['metadata']['lastPrice']
-    print(f"{identifier}: {last_price}")
+# Response structure
+{
+    'data': [
+        {
+            'identifier': 'FUTSTKRELIANCE30-Mar-2026XX0.00',
+            'instrumentType': 'FUTSTK',  # or 'OPTSTK'
+            'underlying': 'RELIANCE',
+            'expiryDate': '30-Mar-2026',
+            'optionType': 'XX',          # 'XX' for Futures, 'CE' or 'PE' for Options
+            'strikePrice': '0.00',
+            'lastPrice': 2850.5,
+            'openPrice': 2835.0,
+            'highPrice': 2860.0,
+            'lowPrice': 2820.0,
+            'closePrice': 2835.3,
+            'prevClose': 2835.3,
+            'change': 15.2,
+            'pchange': 0.54,
+            'openInterest': 123456,
+            'changeinOpenInterest': 1234,
+            'totalTradedVolume': 45678,
+            'totalTurnover': 1296789420,
+            'underlyingValue': 2850.5,
+            'volumeFreezeQuantity': 240001,
+            'ticksize': 0.05,
+        },
+        ...more contracts
+    ],
+    'timestamp': '16-Mar-2026 15:30:00'
+}
 ```
 
-### Contract Details
+### Processing Contract Data
 
 ```python
-contract = quotes['stocks'][0]
+# Iterate through all contracts
+fno_data = n.stock_quote_fno("RELIANCE")
 
-# Metadata
-metadata = contract['metadata']
-{
-    'instrumentType': 'Stock Futures',
-    'expiryDate': '28-Jan-2021',
-    'optionType': '-',
-    'strikePrice': 0,
-    'identifier': 'FUTSTKHDFC28-01-2021XX0.00',
-    'lastPrice': 2565.85,
-    'change': -29.35,
-    'pChange': -1.13,
-    'numberOfContractsTraded': 26898,
-    'totalTurnover': 211855.64
-}
+# Filter futures only
+futures = [c for c in fno_data['data'] if c['instrumentType'] == 'FUTSTK']
 
-# Order book (market depth)
-order_book = contract['marketDeptOrderBook']
+# Filter call options with 30-Mar expiry
+calls_mar = [c for c in fno_data['data'] 
+             if c['instrumentType'] == 'OPTSTK' 
+             and c['optionType'] == 'CE'
+             and c['expiryDate'] == '30-Mar-2026']
 
-# Trade info
-trade_info = contract['tradeInfo']
-print(f"Open Interest: {trade_info['openInterest']}")
-print(f"Change in OI: {trade_info['changeinOpenInterest']}")
-print(f"Volatility (Daily): {contract['otherInfo']['dailyvolatility']}")
-print(f"Volatility (Annualized): {contract['otherInfo']['annualisedVolatility']}")
+# Get highest IV call option
+calls_mar_sorted = sorted(calls_mar, key=lambda x: x['lastPrice'], reverse=True)
+for call in calls_mar_sorted[:5]:
+    print(f"Strike: {call['strikePrice']:8} | Price: {call['lastPrice']:8.2f} | OI: {call['openInterest']}")
+```
+
+### Working with Specific Contracts
+
+```python
+# Get a specific contract
+contract = fno_data['data'][0]
+
+# Extract key information
+identifier = contract['identifier']
+price = contract['lastPrice']
+oi = contract['openInterest']
+volume = contract['totalTradedVolume']
+iv = contract.get('impliedVolatility', 'N/A')  # If available
+
+print(f"Contract: {identifier}")
+print(f"Current Price: {price}")
+print(f"Open Interest: {oi}")
+print(f"Volume: {volume}")
 ```
 
 ---

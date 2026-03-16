@@ -7,11 +7,13 @@ from ..util import live_cache
 class NSELive:
     time_out = 5
     base_url = "https://www.nseindia.com/api"
+    nextapi_url = "https://www.nseindia.com/api/NextApi/apiClient/GetQuoteApi"
     page_url = "https://www.nseindia.com/get-quotes/equity?symbol=LT"
     _routes = {
             "stock_meta": "/equity-meta-info",
             "stock_quote": "/quote-equity",
             "stock_derivative_quote": "/quote-derivative",
+            "stock_derivatives_data": "/NextApi/apiClient/GetQuoteApi",
             "market_status": "/marketStatus",
             "chart_data": "/chart-databyindex",
             "market_turnover": "/market-turnover",
@@ -56,6 +58,21 @@ class NSELive:
         r = self.s.get(url, params=payload)
         return r.json()
 
+    def _get_nextapi(self, function_name, **params):
+        """Call NextApi endpoint with functionName and additional parameters.
+        
+        Args:
+            function_name: The functionName parameter for NextApi
+            **params: Additional query parameters
+        
+        Returns:
+            Parsed JSON response from NextApi
+        """
+        query_params = {"functionName": function_name}
+        query_params.update(params)
+        r = self.s.get(self.nextapi_url, params=query_params)
+        return r.json()
+
     @live_cache
     def stock_quote(self, symbol):
         data = {"symbol": symbol}
@@ -63,8 +80,40 @@ class NSELive:
 
     @live_cache
     def stock_quote_fno(self, symbol):
-        data = {"symbol": symbol}
-        return self.get("stock_derivative_quote", data)
+        """Fetch live derivatives (futures & options) data for a symbol.
+        
+        Args:
+            symbol: Stock/Index symbol (e.g., 'HDFC', 'NIFTY')
+        
+        Returns:
+            Dictionary with derivatives data:
+            {
+                "data": [
+                    {
+                        "identifier": "OPTSTKHDFC30-Mar-2026CE2500.00",
+                        "instrumentType": "OPTSTK",  # OPTSTK or FUTSTK
+                        "underlying": "HDFC",
+                        "expiryDate": "30-Mar-2026",
+                        "optionType": "CE",  # CE, PE, or XX for futures
+                        "strikePrice": "2500.00",
+                        "lastPrice": 125.5,
+                        "openInterest": 1234,
+                        "totalTradedVolume": 5000,
+                        "openPrice": 120.0,
+                        "highPrice": 130.0,
+                        "lowPrice": 119.5,
+                        "changeInOpenInterest": 100,
+                        ...more fields
+                    },
+                    ...more contracts
+                ],
+                "timestamp": "..."
+            }
+        
+        Note: This uses the NSE NextApi endpoint (getSymbolDerivativesData).
+        Returns all available contracts for the given symbol.
+        """
+        return self._get_nextapi("getSymbolDerivativesData", symbol=symbol)
 
     @live_cache
     def trade_info(self, symbol):
