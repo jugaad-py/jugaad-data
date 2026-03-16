@@ -114,10 +114,20 @@ from jugaad_data.nse import NSELive
 
 n = NSELive()
 
-# Stock futures and options
-quotes = n.stock_quote_fno("HDFC")
-for quote in quotes['stocks']:
-    print(f"{quote['metadata']['identifier']}\t{quote['metadata']['lastPrice']}")
+# Stock/Index futures and options data
+fno_data = n.stock_quote_fno("RELIANCE")
+
+# Process all contracts
+for contract in fno_data['data']:
+    identifier = contract['identifier']
+    price = contract['lastPrice']
+    oi = contract['openInterest']
+    print(f"{identifier:40} | Price: {price:8.2f} | OI: {oi}")
+
+# Filter only call options
+calls = [c for c in fno_data['data'] 
+         if c['instrumentType'] == 'OPTSTK' and c['optionType'] == 'CE']
+print(f"Total Call Contracts: {len(calls)}")
 
 # Equity derivative turnover
 turnover = n.eq_derivative_turnover()

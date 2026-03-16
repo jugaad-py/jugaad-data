@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.0] - 2026-03-16
+
+### Changed
+- **BREAKING CHANGE**: `stock_quote_fno()` now returns NSE NextApi response format (see API_REFERENCE.md)
+  - **Old format**: Nested structure with `stocks[*].metadata` and `stocks[*].tradeInfo`
+  - **New format**: Flat array structure with `data[*]` containing all contract info
+  - Returns all available contracts (futures + all expiries of calls and puts) in single response
+  - Each contract now includes comprehensive fields: `identifier`, `instrumentType`, `expiryDate`, `optionType`, `strikePrice`, `lastPrice`, `openInterest`, etc.
+  - Response also includes `timestamp` field
+
+### Fixed
+- Issue #105: `stock_quote_fno()` returning empty data - NSE deprecated old `/api/quote-derivative` endpoint
+  - Now uses NSE NextApi endpoint (`getSymbolDerivativesData`) which provides current derivatives data
+  - Resolves `IndexError: list index out of range` when accessing `stocks[0]`
+
+### Updated
+- Enhanced test coverage: `test_stock_quote_fno()` now validates actual data presence, not just structure
+- Updated API documentation with new response fields and format
+- Updated LIVE_DATA_GUIDE with examples for processing new response format
+- Updated QUICKSTART guide with new usage examples
+
 ## [0.32.0] - 2026-03-16
 
 ### Added

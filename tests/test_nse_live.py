@@ -6,10 +6,22 @@ def test_stock_quote():
     assert r['info']['symbol'] == 'HDFC'
 
 def test_stock_quote_fno():
-    r = n.stock_quote_fno("HDFC")
-    assert 'strikePrices' in r
-    assert 'info' in r
-    assert 'stocks' in r
+    # Use a symbol with active derivatives (NIFTY or RELIANCE)
+    r = n.stock_quote_fno("RELIANCE")
+    # Validate response structure
+    assert 'data' in r, "Response should have 'data' key"
+    assert 'timestamp' in r, "Response should have 'timestamp' key"
+    # Validate data is not empty
+    assert len(r['data']) > 0, "Derivatives data should not be empty"
+    
+    # Validate first contract structure
+    contract = r['data'][0]
+    assert 'identifier' in contract
+    assert 'instrumentType' in contract
+    assert 'underlying' in contract
+    assert contract['underlying'] == 'RELIANCE', "Underlying symbol should match requested symbol"
+    assert 'expiryDate' in contract
+    assert 'lastPrice' in contract or contract.get('lastPrice') is not None
 
 def test_trade_info():
     r = n.trade_info("HDFC")
