@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.1] - 2026-03-16
+
+### Fixed
+- Issue #97: `derivatives_df()` and `derivatives_csv()` returning empty or failing with 404 error
+  - NSE deprecated `/api/historical/fo/derivatives` endpoint
+  - Now uses updated `/api/historicalOR/foCPV` endpoint
+  - Added `year` parameter to API requests as required by new endpoint
+  - Historical data availability limited to recent periods per NSE data retention
+
+### Added
+- Test coverage for `derivatives_df()` with both futures (FUTIDX) and options (OPTIDX) data
+- Test coverage for `derivatives_raw()` with different instrument types
+- Documentation note about historical data availability for derivatives
+
 ## [0.33.0] - 2026-03-16
 
 ### Changed
