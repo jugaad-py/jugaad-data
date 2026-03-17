@@ -230,7 +230,7 @@ def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, st
     else:
         raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, strike_price, option_type)
     if not output:
-        output = "{}-{}-{}-{}.csv".format(symbol, from_date, to_date, series)
+        output = "{}-{}-{}-{}.csv".format(symbol, from_date, to_date, instrument_type)
     if "FUT" in instrument_type:
         final_headers = futures_final_headers
         select_headers = futures_select_headers
@@ -314,17 +314,21 @@ class NSEIndexHistory(NSEHistory):
     def _post_json(self, path_name, params):
         path = self.path_map[path_name]
         url = urljoin(self.base_url, path)
-        self.r = self.s.post(url, json=params, verify=self.ssl_verify)
+        payload = {"cinfo": json.dumps(params)}
+        self.r = self.s.post(url, data=json.dumps(payload), verify=self.ssl_verify)
         return self.r
-    
+
     @ut.cached(APP_NAME + '-index')
-    def _index(self, symbol, from_date, to_date): 
-        params = {'name': symbol,
-                'startDate': from_date.strftime("%d-%b-%Y"),
-                'endDate': to_date.strftime("%d-%b-%Y")
+    def _index(self, symbol, from_date, to_date):
+        params = {
+            'name': symbol,
+            'startDate': from_date.strftime("%d-%b-%Y"),
+            'endDate': to_date.strftime("%d-%b-%Y"),
+            'indexName': symbol
         }
         r = self._post_json("index_history", params=params)
-        return json.loads(self.r.json()['d'])
+        j = r.json()
+        return json.loads(j['d'])
     
     def index_raw(self, symbol, from_date, to_date):
         date_ranges = ut.break_dates(from_date, to_date)
@@ -334,12 +338,15 @@ class NSEIndexHistory(NSEHistory):
     
     @ut.cached(APP_NAME + '-index_pe')
     def _index_pe(self, symbol, from_date, to_date):
-        params = {'name': symbol,
-                'startDate': from_date.strftime("%d-%b-%Y"),
-                'endDate': to_date.strftime("%d-%b-%Y")
+        params = {
+            'name': symbol,
+            'startDate': from_date.strftime("%d-%b-%Y"),
+            'endDate': to_date.strftime("%d-%b-%Y"),
+            'indexName': symbol
         }
         r = self._post_json("index_pe_history", params=params)
-        return json.loads(self.r.json()['d'])
+        j = r.json()
+        return json.loads(j['d'])
 
     def index_pe_raw(self, symbol, from_date, to_date):
         date_ranges = ut.break_dates(from_date, to_date)
