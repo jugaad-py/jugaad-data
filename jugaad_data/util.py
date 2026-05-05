@@ -34,20 +34,21 @@ def np_float(num):
 
 @np_exception
 def np_date(dt):
+    timezone = "in"
     try:
-        return np.datetime64(dt)
+        return np.datetime64(dt, timezone)
     except:
         pass
 
     try:
         dt = datetime.strptime(dt, "%d-%b-%Y").date()
-        return np.datetime64(dt)
+        return np.datetime64(dt, timezone)
     except:
         pass
 
     try:
         dt = datetime.strptime(dt, "%d %b %Y").date()
-        return np.datetime64(dt)
+        return np.datetime64(dt, timezone)
     except:
         pass
 
