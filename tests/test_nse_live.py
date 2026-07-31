@@ -95,6 +95,45 @@ def test_pre_open_market():
     assert "unchanged" in d
     assert "advances" in d
 
+def test_corporate_integrated_filing():
+    # All filings (no filters)
+    d = n.corporate_integrated_filing()
+    assert isinstance(d, dict) or isinstance(d, list)
+
+    # Filter by index
+    d = n.corporate_integrated_filing(index="equities")
+    assert isinstance(d, dict) or isinstance(d, list)
+
+    # Filter by index=sme
+    d = n.corporate_integrated_filing(index="sme")
+    assert isinstance(d, dict) or isinstance(d, list)
+
+    # Filter by symbol and issuer
+    d = n.corporate_integrated_filing(
+        index="equities",
+        symbol="DIXON",
+        issuer="Dixon Technologies (India) Limited",
+        period_ended="all"
+    )
+    assert isinstance(d, dict) or isinstance(d, list)
+
+    # Filter with date range
+    from datetime import date
+    d = n.corporate_integrated_filing(
+        index="equities",
+        symbol="DIXON",
+        issuer="Dixon Technologies (India) Limited",
+        period_ended="all",
+        from_date=date(2026, 1, 1),
+        to_date=date(2026, 6, 30)
+    )
+    assert isinstance(d, dict) or isinstance(d, list)
+
+    # Ensure partial date raises exception
+    import pytest
+    with pytest.raises(Exception):
+        n.corporate_integrated_filing(from_date=date(2026, 1, 1))
+
 def test_corporate_announcements():
     d = n.corporate_announcements()
     assert type(d) == list

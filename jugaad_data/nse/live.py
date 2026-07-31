@@ -25,7 +25,8 @@ class NSELive:
             "currency_option_chain": "/option-chain-currency",
             "pre_open_market": "/market-data-pre-open",
             "holiday_list": "/holiday-master?type=trading",
-            "corporate_announcements": "/corporate-announcements"
+            "corporate_announcements": "/corporate-announcements",
+            "integrated_filing": "/integrated-filing-results"
     }
     
     def __init__(self):
@@ -220,6 +221,43 @@ class NSELive:
     @live_cache
     def holiday_list(self):
         return self.get("holiday_list", {})
+
+    def corporate_integrated_filing(self, index=None, symbol=None, issuer=None,
+                                     period_ended=None, from_date=None, to_date=None,
+                                     filing_type="Integrated Filing- Financials",
+                                     page=1, size=20):
+        """
+        Returns corporate integrated filing results from NSE.
+        (https://www.nseindia.com/companies-listing/corporate-filings-integrated-filing)
+
+        Args:
+            index:       Market segment - 'equities', 'sme', etc. (optional)
+            symbol:      Stock symbol e.g. 'DIXON' (optional)
+            issuer:      Full company name e.g. 'Dixon Technologies (India) Limited' (optional)
+            period_ended: Period filter e.g. 'all' or a specific period string (optional)
+            from_date:   datetime.date - start date filter (optional, requires to_date)
+            to_date:     datetime.date - end date filter (optional, requires from_date)
+            filing_type: Type of filing (default: 'Integrated Filing- Financials')
+            page:        Page number for pagination (default: 1)
+            size:        Number of results per page (default: 20)
+        """
+        payload = {"type": filing_type, "page": page, "size": size}
+
+        if index:
+            payload["index"] = index
+        if symbol:
+            payload["symbol"] = symbol
+        if issuer:
+            payload["issuer"] = issuer
+        if period_ended:
+            payload["period_ended"] = period_ended
+        if from_date and to_date:
+            payload["from_date"] = from_date.strftime("%d-%m-%Y")
+            payload["to_date"] = to_date.strftime("%d-%m-%Y")
+        elif from_date or to_date:
+            raise Exception("Please provide both from_date and to_date")
+
+        return self.get("integrated_filing", payload)
 
     def corporate_announcements(self, segment='equities', from_date=None, to_date=None, symbol=None):
         """

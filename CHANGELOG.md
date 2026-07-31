@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.0] - 2026-07-31
+
+### Added
+- `NSELive.corporate_integrated_filing()` — fetch corporate integrated filing results from NSE
+  - Supports filtering by market segment (`index`), `symbol`, `issuer`, `period_ended`, and date range
+  - Supports pagination via `page` and `size` parameters
+  - `filing_type` parameter allows fetching different filing categories (default: `'Integrated Filing- Financials'`)
+
 ## [0.33.1] - 2026-03-16
 
 ### Fixed
