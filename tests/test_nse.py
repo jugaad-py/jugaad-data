@@ -220,7 +220,7 @@ class TestDerivatives(TestCase):
         instrument_type = "OPTIDX"
         strike_price = 23000
         option_type = "PE"
-        
+
         df = nse.derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type,
                                strike_price=strike_price, option_type=option_type)
         assert len(df) > 0
@@ -230,6 +230,29 @@ class TestDerivatives(TestCase):
         assert 'STRIKE PRICE' in df.columns
         assert 'OPTION TYPE' in df.columns
         assert 'CLOSE' in df.columns
+
+    def test_derivatives_csv_futures(self):
+        """Test derivatives_csv for futures - previously raised NameError on 'series'"""
+        symbol = "NIFTY"
+        from_date = date(2026, 3, 9)
+        to_date = date(2026, 3, 16)
+        expiry_date = date(2026, 3, 30)
+        instrument_type = "FUTIDX"
+        output = nse.derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type)
+        assert output.endswith(".csv")
+        assert instrument_type in output
+
+    def test_derivatives_csv_options(self):
+        """Test derivatives_csv for options"""
+        symbol = "NIFTY"
+        from_date = date(2026, 3, 9)
+        to_date = date(2026, 3, 16)
+        expiry_date = date(2026, 3, 30)
+        instrument_type = "OPTIDX"
+        output = nse.derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type,
+                                     strike_price=23000, option_type="PE")
+        assert output.endswith(".csv")
+        assert instrument_type in output
 
 class TestIndexHistory(TestCase):
     def setUp(self):

@@ -230,7 +230,7 @@ def derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type, st
     else:
         raw = derivatives_raw(symbol, from_date, to_date, expiry_date, instrument_type, strike_price, option_type)
     if not output:
-        output = "{}-{}-{}-{}.csv".format(symbol, from_date, to_date, series)
+        output = "{}-{}-{}-{}.csv".format(symbol, from_date, to_date, instrument_type)
     if "FUT" in instrument_type:
         final_headers = futures_final_headers
         select_headers = futures_select_headers
