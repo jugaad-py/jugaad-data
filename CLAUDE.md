@@ -14,6 +14,8 @@ pip install -r requirements.dev.txt
 
 > **Virtualenv rule:** Always use the project virtualenv at `env/`. Use `env/Scripts/pip` and `env/Scripts/python` (Windows) for all installs and execution.
 
+> **Git push rule:** This repo uses `core.sshCommand = ssh -i ~/.ssh/github_personal -o IdentitiesOnly=yes` (set in local git config). Always push using this repo's git config — never override with `-F /dev/null`.
+
 ### Run tests
 ```bash
 pytest                        # all tests
