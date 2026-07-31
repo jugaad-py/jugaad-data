@@ -264,6 +264,20 @@ Get corporate announcements/disclosures.
 }
 ```
 
+#### `corporate_integrated_filing(index=None, symbol=None, issuer=None, period_ended=None, from_date=None, to_date=None, filing_type="Integrated Filing- Financials", page=1, size=20)`
+Get corporate integrated filing results (financial results, annual reports, etc.).
+
+**Parameters:**
+- `index` (str, optional): Market segment - `'equities'`, `'sme'`, etc.
+- `symbol` (str, optional): Stock symbol e.g. `'DIXON'`
+- `issuer` (str, optional): Full company name e.g. `'Dixon Technologies (India) Limited'`
+- `period_ended` (str, optional): Period filter e.g. `'all'`
+- `from_date` (date, optional): Start date filter (requires `to_date`)
+- `to_date` (date, optional): End date filter (requires `from_date`)
+- `filing_type` (str): Type of filing (default: `'Integrated Filing- Financials'`)
+- `page` (int): Page number for pagination (default: 1)
+- `size` (int): Results per page (default: 20)
+
 ---
 
 ## NSE Historical Data Module

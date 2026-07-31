@@ -11,7 +11,8 @@ A comprehensive guide to fetching real-time market data using `jugaad-data`.
 5. [Live Derivatives Data](#live-derivatives-data)
 6. [Live Option Chains](#live-option-chains)
 7. [Corporate Announcements](#corporate-announcements)
-8. [Best Practices](#best-practices)
+8. [Corporate Integrated Filing](#corporate-integrated-filing)
+9. [Best Practices](#best-practices)
 
 ---
 
@@ -613,6 +614,64 @@ announcement = announcements[0]
 - Rights issue
 - Merger & Acquisition
 - Financial results
+
+---
+
+## Corporate Integrated Filing
+
+Fetch corporate integrated filing results (financial results, annual reports, etc.) from NSE.
+
+### Basic Usage
+
+```python
+from jugaad_data.nse import NSELive
+n = NSELive()
+
+# All recent filings
+filings = n.corporate_integrated_filing()
+
+# Filter by market segment
+filings = n.corporate_integrated_filing(index="equities")
+filings = n.corporate_integrated_filing(index="sme")
+
+# Filter by symbol and issuer
+filings = n.corporate_integrated_filing(
+    index="equities",
+    symbol="DIXON",
+    issuer="Dixon Technologies (India) Limited",
+    period_ended="all"
+)
+
+# Filter by date range
+from datetime import date
+filings = n.corporate_integrated_filing(
+    index="equities",
+    symbol="DIXON",
+    issuer="Dixon Technologies (India) Limited",
+    period_ended="all",
+    from_date=date(2026, 1, 1),
+    to_date=date(2026, 6, 30)
+)
+
+# Pagination
+filings = n.corporate_integrated_filing(index="equities", page=2, size=50)
+```
+
+### Parameters
+
+| Parameter     | Type           | Default                            | Description                                   |
+|---------------|----------------|------------------------------------|-----------------------------------------------|
+| `index`       | str (optional) | None                               | Market segment: `'equities'`, `'sme'`, etc.   |
+| `symbol`      | str (optional) | None                               | Stock symbol e.g. `'DIXON'`                   |
+| `issuer`      | str (optional) | None                               | Full company name                             |
+| `period_ended`| str (optional) | None                               | Period filter e.g. `'all'`                    |
+| `from_date`   | date (optional)| None                               | Start date (requires `to_date`)               |
+| `to_date`     | date (optional)| None                               | End date (requires `from_date`)               |
+| `filing_type` | str            | `'Integrated Filing- Financials'`  | Type of filing                                |
+| `page`        | int            | 1                                  | Page number for pagination                    |
+| `size`        | int            | 20                                 | Results per page                              |
+
+> **Note:** `from_date` and `to_date` must be provided together. Providing only one raises an exception.
 
 ---
 
