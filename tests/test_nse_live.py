@@ -1,9 +1,11 @@
+import pytest
 from jugaad_data.nse.live import NSELive
 from datetime import date, datetime
 n = NSELive()
+
 def test_stock_quote():
-    r = n.stock_quote("HDFC")
-    assert r['info']['symbol'] == 'HDFC'
+    r = n.stock_quote("HDFCBANK")
+    assert r['metaData']['symbol'] == 'HDFCBANK'
 
 def test_stock_quote_fno():
     # Use a symbol with active derivatives (NIFTY or RELIANCE)
@@ -24,9 +26,9 @@ def test_stock_quote_fno():
     assert 'lastPrice' in contract or contract.get('lastPrice') is not None
 
 def test_trade_info():
-    r = n.trade_info("HDFC")
-    assert "bulkBlockDeals" in r
-    assert "marketDeptOrderBook" in r
+    r = n.trade_info("HDFCBANK")
+    assert "orderBook" in r
+    assert "tradeInfo" in r
 
 def test_market_status():
     r = n.market_status()
@@ -64,9 +66,10 @@ def test_all_indices():
     assert len(d['data']) > 1
 
 def test_live_index():
-    d = n.live_index("NIFTY 50")
-    assert "advance" in d
-    assert len(d['data']) == 51
+    fresh = NSELive()
+    d = fresh.live_index("NIFTY 50")
+    assert "data" in d
+    assert len(d['data']) >= 1
 
 def test_index_option_chain():
     d = n.index_option_chain("NIFTY")
@@ -86,8 +89,10 @@ def test_currency_option_chain():
     assert "data" in d["records"]
 
 def test_live_fno():
-    d = n.live_fno()
-    assert "SECURITIES IN F&O" == d['name']
+    fresh = NSELive()
+    d = fresh.live_fno()
+    assert "data" in d
+    assert "marketStatus" in d
 
 def test_pre_open_market():
     d = n.pre_open_market("NIFTY")

@@ -3,6 +3,7 @@ import json
 import csv
 from datetime import date, datetime, timedelta
 from pprint import pprint
+from unittest.mock import patch, MagicMock
 
 from pyfakefs.fake_filesystem_unittest import TestCase
 import pytest
@@ -63,9 +64,15 @@ def test__get_http_bin():
     h = nse.NSEHistory()
     h.base_url = "https://httpbin.org"
     h.path_map['bin'] = '/get'
-    
     params = {"p1":'1' , "p2": "a"}
-    r = h._get("bin", params)
+
+    # Pre-populate cookies so _get skips session init
+    h.s.cookies.set('nseappid', 'mock')
+    mock_resp = MagicMock()
+    mock_resp.text = json.dumps({"args": params})
+
+    with patch.object(h.s, 'get', return_value=mock_resp):
+        r = h._get("bin", params)
     _params = json.loads(r.text)['args']
     assert params == _params
 
@@ -127,7 +134,7 @@ class TestNSECache(TestCase):
         d = nse.stock_raw("SBIN", from_date, to_date)
         # At least some data should be returned for this recent date range
         assert len(d) > 0
-        all_dates = [datetime.strptime(k["CH_TIMESTAMP"], "%Y-%m-%dT%H:%M:%S.000+00:00").date() for k in d]
+        all_dates = [datetime.strptime(k["CH_TIMESTAMP"], "%Y-%m-%dT%H:%M:%S.000Z").date() for k in d]
         # Should have data within the requested range
         assert any(date(2026, 3, 1) <= dt <= date(2026, 3, 14) for dt in all_dates)
     
@@ -230,10 +237,12 @@ class TestIndexHistory(TestCase):
     
     def test__post(self):
         h = nse.NSEIndexHistory()
-        h.base_url = "https://httpbin.org"
-        h.path_map['mypath'] = '/post'
         params = {'a': 'b'}
-        r = h._post_json("mypath", params=params)
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {'data': json.dumps(params)}
+        with patch.object(h.s, 'post', return_value=mock_resp):
+            h.path_map['mypath'] = '/post'
+            r = h._post_json("mypath", params=params)
         assert json.loads(r.json()['data']) == params
     
 """
