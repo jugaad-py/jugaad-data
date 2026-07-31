@@ -19,7 +19,7 @@ class NSELive:
             "market_turnover": "/market-turnover",
             "equity_derivative_turnover": "/equity-stock",
             "all_indices": "/allIndices",
-            "live_index": "/equity-stockIndices",
+            "live_index": "/equity-stock-indices",
             "option_chain_v3": "/option-chain-v3",
             "option_chain_contract_info": "/option-chain-contract-info",
             "currency_option_chain": "/option-chain-currency",
@@ -75,9 +75,19 @@ class NSELive:
         return r.json()
 
     @live_cache
-    def stock_quote(self, symbol):
-        data = {"symbol": symbol}
-        return self.get("stock_quote", data) 
+    def stock_quote(self, symbol, market_type="N", series="EQ"):
+        """Fetch live quote for an equity symbol.
+
+        Args:
+            symbol:      NSE stock symbol e.g. 'HDFCBANK'
+            market_type: Market type code (default 'N' = Normal market)
+            series:      Trading series (default 'EQ' = Equity)
+
+        Returns:
+            Dict with keys: metaData, priceInfo, tradeInfo, secInfo, orderBook, lastUpdateTime
+        """
+        r = self._get_nextapi("getSymbolData", marketType=market_type, series=series, symbol=symbol)
+        return r["equityResponse"][0]
 
     @live_cache
     def stock_quote_fno(self, symbol):
@@ -117,9 +127,19 @@ class NSELive:
         return self._get_nextapi("getSymbolDerivativesData", symbol=symbol)
 
     @live_cache
-    def trade_info(self, symbol):
-        data = {"symbol": symbol, "section": "trade_info"}
-        return self.get("stock_quote", data) 
+    def trade_info(self, symbol, market_type="N", series="EQ"):
+        """Fetch trade info (order book depth, traded volumes) for an equity symbol.
+
+        Args:
+            symbol:      NSE stock symbol e.g. 'HDFCBANK'
+            market_type: Market type code (default 'N' = Normal market)
+            series:      Trading series (default 'EQ' = Equity)
+
+        Returns:
+            Dict with keys: metaData, priceInfo, tradeInfo, secInfo, orderBook, lastUpdateTime
+        """
+        r = self._get_nextapi("getSymbolData", marketType=market_type, series=series, symbol=symbol)
+        return r["equityResponse"][0]
 
     @live_cache
     def market_status(self):
@@ -258,6 +278,110 @@ class NSELive:
             raise Exception("Please provide both from_date and to_date")
 
         return self.get("integrated_filing", payload)
+
+    @live_cache
+    def symbol_meta(self, symbol):
+        """Fetch metadata for a symbol (FNO eligibility, delisting status, market type, etc.).
+
+        Args:
+            symbol: NSE stock symbol e.g. 'HDFCBANK'
+
+        Returns:
+            Dict with keys: symbol, companyName, activeSeries, isFNOSec, isCASec,
+                            isSLBSec, isDebtSec, isETFSec, isDelisted, isin, marketType, etc.
+        """
+        return self._get_nextapi("getMetaData", symbol=symbol)
+
+    @live_cache
+    def symbol_name(self, symbol):
+        """Fetch company name for a symbol.
+
+        Args:
+            symbol: NSE stock symbol e.g. 'HDFCBANK'
+
+        Returns:
+            Dict with keys: symbol, companyName
+        """
+        return self._get_nextapi("getSymbolName", symbol=symbol)
+
+    @live_cache
+    def top_stocks(self):
+        """Fetch top gainers, losers, most active stocks by value/volume, 52-week highs/lows.
+
+        Returns:
+            Dict with keys: topGainers, topLoosers, mostActiveValue, mostActiveVolume,
+                            volumeSpurtsValue, etfWatchValue, fiftyTwoWeekHigh, fiftyTwoWeekLow, timestamp
+        """
+        return self._get_nextapi("getTopTenStock")
+
+    @live_cache
+    def block_deal_session(self):
+        """Fetch current block deal session status and deals.
+
+        Returns:
+            Dict with key: data (list of block deals)
+        """
+        return self._get_nextapi("getBlockDealSession")
+
+    @live_cache
+    def reg_details(self, symbol):
+        """Fetch regulatory/compliance details for a symbol.
+
+        Args:
+            symbol: NSE stock symbol e.g. 'HDFCBANK'
+
+        Returns:
+            List of regulatory detail records
+        """
+        return self._get_nextapi("getRegDetails", symbol=symbol)
+
+    @live_cache
+    def symbol_chart_data(self, symbol, series="EQ", days="1D"):
+        """Fetch intraday or historical chart data for a symbol.
+
+        Args:
+            symbol: NSE stock symbol e.g. 'HDFCBANK'
+            series: Trading series (default 'EQ'). Appended as suffix to form the chart identifier.
+            days:   Time period for chart data (default '1D')
+
+        Returns:
+            Dict with keys: identifier, name, grapthData, closePrice
+        """
+        return self._get_nextapi("getSymbolChartData", symbol=symbol + series + "N", days=days)
+
+    @live_cache
+    def yearwise_data(self, symbol, series="EQ"):
+        """Fetch year-wise price/volume summary for a symbol.
+
+        Args:
+            symbol: NSE stock symbol e.g. 'HDFCBANK'
+            series: Trading series (default 'EQ'). Appended as suffix to form the identifier.
+
+        Returns:
+            List of year-wise data records
+        """
+        return self._get_nextapi("getYearwiseData", symbol=symbol + series + "N")
+
+    @live_cache
+    def index_list(self, symbol):
+        """Fetch list of indices the symbol is a constituent of.
+
+        Args:
+            symbol: NSE stock symbol e.g. 'HDFCBANK'
+
+        Returns:
+            List of index names
+        """
+        return self._get_nextapi("getIndexList", symbol=symbol)
+
+    @live_cache
+    def quote_index_data(self):
+        """Fetch live quote data for all major indices.
+
+        Returns:
+            List of index quote records
+        """
+        return self._get_nextapi("getQuoteIndexData")
 
     def corporate_announcements(self, segment='equities', from_date=None, to_date=None, symbol=None):
         """

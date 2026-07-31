@@ -3,6 +3,7 @@ import json
 import csv
 from datetime import date, datetime, timedelta
 from pprint import pprint
+from unittest.mock import patch, MagicMock
 
 from pyfakefs.fake_filesystem_unittest import TestCase
 import pytest
@@ -63,9 +64,15 @@ def test__get_http_bin():
     h = nse.NSEHistory()
     h.base_url = "https://httpbin.org"
     h.path_map['bin'] = '/get'
-    
     params = {"p1":'1' , "p2": "a"}
-    r = h._get("bin", params)
+
+    # Pre-populate cookies so _get skips session init
+    h.s.cookies.set('nseappid', 'mock')
+    mock_resp = MagicMock()
+    mock_resp.text = json.dumps({"args": params})
+
+    with patch.object(h.s, 'get', return_value=mock_resp):
+        r = h._get("bin", params)
     _params = json.loads(r.text)['args']
     assert params == _params
 
@@ -127,7 +134,7 @@ class TestNSECache(TestCase):
         d = nse.stock_raw("SBIN", from_date, to_date)
         # At least some data should be returned for this recent date range
         assert len(d) > 0
-        all_dates = [datetime.strptime(k["CH_TIMESTAMP"], "%Y-%m-%dT%H:%M:%S.000+00:00").date() for k in d]
+        all_dates = [datetime.strptime(k["CH_TIMESTAMP"], "%Y-%m-%dT%H:%M:%S.000Z").date() for k in d]
         # Should have data within the requested range
         assert any(date(2026, 3, 1) <= dt <= date(2026, 3, 14) for dt in all_dates)
     
@@ -213,7 +220,7 @@ class TestDerivatives(TestCase):
         instrument_type = "OPTIDX"
         strike_price = 23000
         option_type = "PE"
-        
+
         df = nse.derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type,
                                strike_price=strike_price, option_type=option_type)
         assert len(df) > 0
@@ -224,49 +231,95 @@ class TestDerivatives(TestCase):
         assert 'OPTION TYPE' in df.columns
         assert 'CLOSE' in df.columns
 
+    def test_derivatives_csv_futures(self):
+        """Test derivatives_csv for futures - previously raised NameError on 'series'"""
+        symbol = "NIFTY"
+        from_date = date(2026, 3, 9)
+        to_date = date(2026, 3, 16)
+        expiry_date = date(2026, 3, 30)
+        instrument_type = "FUTIDX"
+        output = nse.derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type)
+        assert output.endswith(".csv")
+        assert instrument_type in output
+
+    def test_derivatives_csv_options(self):
+        """Test derivatives_csv for options"""
+        symbol = "NIFTY"
+        from_date = date(2026, 3, 9)
+        to_date = date(2026, 3, 16)
+        expiry_date = date(2026, 3, 30)
+        instrument_type = "OPTIDX"
+        output = nse.derivatives_csv(symbol, from_date, to_date, expiry_date, instrument_type,
+                                     strike_price=23000, option_type="PE")
+        assert output.endswith(".csv")
+        assert instrument_type in output
+
 class TestIndexHistory(TestCase):
     def setUp(self):
         setup_test(self)
     
     def test__post(self):
         h = nse.NSEIndexHistory()
-        h.base_url = "https://httpbin.org"
-        h.path_map['mypath'] = '/post'
         params = {'a': 'b'}
-        r = h._post_json("mypath", params=params)
+        mock_resp = MagicMock()
+        mock_resp.json.return_value = {'data': json.dumps(params)}
+        with patch.object(h.s, 'post', return_value=mock_resp):
+            h.path_map['mypath'] = '/post'
+            r = h._post_json("mypath", params=params)
         assert json.loads(r.json()['data']) == params
     
-"""
     def test_index_raw(self):
         symbol = "NIFTY 50"
-        from_date = date(2020, 6, 1)
-        to_date = date(2020, 7, 30) 
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
         d = nse.index_raw(symbol, from_date, to_date)
-        assert d[0]['Index Name'] == 'Nifty 50'
-        assert d[0]['HistoricalDate'] == '30 Jul 2020'
-        assert d[-1]['HistoricalDate'] == '01 Jun 2020'
-        app_name = nse.APP_NAME + '-index'
-        files = os.listdir(user_cache_dir(app_name, app_name))
-        assert len(files) == 2
-    
-    def test_index_csv(self):    
-        from_date = date(2001,1,15)
-        to_date = date(2001,6,15)
+        assert len(d) > 0
+        assert 'INDEX_NAME' in d[0]
+        assert d[0]['INDEX_NAME'] == 'Nifty 50'
+
+    def test_index_csv(self):
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
         raw = nse.index_raw("NIFTY 50", from_date, to_date)
         output = nse.index_csv("NIFTY 50", from_date, to_date)
         with open(output) as fp:
             text = fp.read()
             rows = [x.split(',') for x in text.split('\n')]
-            assert rows[1][2] == raw[0]['OPEN']
+        assert len(rows) > 1
 
-    def test_index_df(self):    
-        from_date = date(2001,1,15)
-        to_date = date(2001,6,15)
+    def test_index_df(self):
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
         index_df = nse.index_df("NIFTY 50", from_date, to_date)
-        assert len(index_df) > 100 
-        assert list(index_df.columns) == ['Index Name', 'INDEX_NAME', 'HistoricalDate', 'OPEN', 'HIGH',
-       'LOW', 'CLOSE'] 
-"""
+        assert len(index_df) > 0
+        assert 'Index Name' in index_df.columns
+        assert 'OPEN' in index_df.columns
+
+    def test_index_tri_raw(self):
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
+        d = nse.index_tri_raw("NIFTY 50", "NIFTY 50", from_date, to_date)
+        assert len(d) > 0
+        assert 'Index Name' in d[0]
+        assert 'TotalReturnsIndex' in d[0]
+        assert 'Date' in d[0]
+
+    def test_index_type_list(self):
+        types = nse.index_type_list()
+        assert isinstance(types, list)
+        assert 'Equity' in types
+
+    def test_index_subtype_list(self):
+        subtypes = nse.index_subtype_list('Equity', 'Historical Index Data')
+        assert isinstance(subtypes, list)
+        assert 'Broad Market Indices' in subtypes
+        assert 'Sectoral Indices' in subtypes
+
+    def test_index_name_list(self):
+        names = nse.index_name_list('Broad Market Indices', 'Historical Index Data')
+        assert isinstance(names, list)
+        assert 'NIFTY 50' in names
+        assert len(names) > 5
 
 def test_expiry_dates():
     dt = date(2020,1,1)

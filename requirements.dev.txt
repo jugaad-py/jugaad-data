@@ -5,3 +5,4 @@ pyfakefs
 pandas
 jupyterlab
 twine
+hypothesis
