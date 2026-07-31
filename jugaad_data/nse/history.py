@@ -303,8 +303,12 @@ class NSEIndexHistory(NSEHistory):
             "Content-Type": "application/json; charset=UTF-8"
             }
         self.path_map = {
-            "index_history": "/Backpage.aspx/getHistoricaldatatabletoString",
-            "index_pe_history": "/Backpage.aspx/getpepbHistoricaldataDBtoString"
+            "index_history": "/BackPage/getHistoricaldatatabletoString",
+            "index_pe_history": "/BackPage/getpepbHistoricaldataDBtoString",
+            "index_tri_history": "/BackPage/getTotalReturnIndexString",
+            "index_type_list": "/BackPage/gethistoricaltypedata1",
+            "index_subtype_list": "/BackPage/gethistoricaltypeSubindexdata",
+            "index_name_list": "/BackPage/gethistoricaltypeindexdata",
         }
         self.base_url = "https://niftyindices.com"
         self.s = Session()
@@ -318,13 +322,16 @@ class NSEIndexHistory(NSEHistory):
         return self.r
     
     @ut.cached(APP_NAME + '-index')
-    def _index(self, symbol, from_date, to_date): 
-        params = {'name': symbol,
-                'startDate': from_date.strftime("%d-%b-%Y"),
-                'endDate': to_date.strftime("%d-%b-%Y")
+    def _index(self, symbol, from_date, to_date):
+        cinfo = {
+            'name': symbol,
+            'startDate': from_date.strftime("%d-%b-%Y"),
+            'endDate': to_date.strftime("%d-%b-%Y"),
+            'indexName': symbol,
         }
+        params = {'cinfo': str(cinfo).replace('"', "'")}
         r = self._post_json("index_history", params=params)
-        return json.loads(self.r.json()['d'])
+        return self.r.json()
     
     def index_raw(self, symbol, from_date, to_date):
         date_ranges = ut.break_dates(from_date, to_date)
@@ -334,12 +341,15 @@ class NSEIndexHistory(NSEHistory):
     
     @ut.cached(APP_NAME + '-index_pe')
     def _index_pe(self, symbol, from_date, to_date):
-        params = {'name': symbol,
-                'startDate': from_date.strftime("%d-%b-%Y"),
-                'endDate': to_date.strftime("%d-%b-%Y")
+        cinfo = {
+            'name': symbol,
+            'startDate': from_date.strftime("%d-%b-%Y"),
+            'endDate': to_date.strftime("%d-%b-%Y"),
+            'indexName': symbol,
         }
+        params = {'cinfo': str(cinfo).replace('"', "'")}
         r = self._post_json("index_pe_history", params=params)
-        return json.loads(self.r.json()['d'])
+        return self.r.json()
 
     def index_pe_raw(self, symbol, from_date, to_date):
         date_ranges = ut.break_dates(from_date, to_date)
@@ -347,10 +357,64 @@ class NSEIndexHistory(NSEHistory):
         chunks = ut.pool(self._index_pe, params, max_workers=self.workers)
         return list(itertools.chain.from_iterable(chunks))
 
+    @ut.cached(APP_NAME + '-index_tri')
+    def _index_tri(self, name, index_name, from_date, to_date):
+        cinfo = {
+            'name': name,
+            'startDate': from_date.strftime("%d-%b-%Y"),
+            'endDate': to_date.strftime("%d-%b-%Y"),
+            'indexName': index_name,
+        }
+        params = {'cinfo': str(cinfo).replace('"', "'")}
+        r = self._post_json("index_tri_history", params=params)
+        return self.r.json()
+
+    def index_tri_raw(self, name, index_name, from_date, to_date):
+        date_ranges = ut.break_dates(from_date, to_date)
+        params = [(name, index_name, x[0], x[1]) for x in reversed(date_ranges)]
+        chunks = ut.pool(self._index_tri, params, max_workers=self.workers)
+        return list(itertools.chain.from_iterable(chunks))
+
+    def index_type_list(self):
+        """Returns top-level index types: Equity, Fixed Income, Multi Asset"""
+        path = self.path_map["index_type_list"]
+        url = urljoin(self.base_url, path)
+        r = self.s.post(url, verify=self.ssl_verify)
+        return [x['indextype'] for x in r.json() if x.get('indextype')]
+
+    def index_subtype_list(self, index_type, index_group):
+        """Returns sub-categories for a given index_type and index_group.
+
+        index_group examples: 'Historical Index Data', 'Total returns Index Values ',
+                              'P/E, P/B & Div.Yield values'
+        """
+        params = {'cinfo': {'indextype': index_type, 'indexgroup': index_group}}
+        path = self.path_map["index_subtype_list"]
+        url = urljoin(self.base_url, path)
+        r = self.s.post(url, json=params, verify=self.ssl_verify)
+        return [x['indextype'] for x in r.json() if x.get('indextype')]
+
+    def index_name_list(self, index_type, index_group):
+        """Returns all index names for a given index_type (sub-category) and index_group.
+
+        Combine with index_subtype_list() to iterate all sub-categories.
+        index_group examples: 'Historical Index Data', 'Total returns Index Values ',
+                              'P/E, P/B & Div.Yield values'
+        """
+        data = {'cinfo[indextype]': index_type, 'cinfo[indexgroup]': index_group}
+        path = self.path_map["index_name_list"]
+        url = urljoin(self.base_url, path)
+        r = self.s.post(url, data=data, headers={'Content-Type': 'application/x-www-form-urlencoded'}, verify=self.ssl_verify)
+        return [x['indextype'] for x in r.json() if x.get('indextype')]
+
 
 ih = NSEIndexHistory()
 index_raw = ih.index_raw
 index_pe_raw = ih.index_pe_raw
+index_tri_raw = ih.index_tri_raw
+index_type_list = ih.index_type_list
+index_subtype_list = ih.index_subtype_list
+index_name_list = ih.index_name_list
 
 def index_csv(symbol, from_date, to_date, output="", show_progress=False):
     if show_progress:

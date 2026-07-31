@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.0] - 2026-07-31
+
+### Added
+- `index_tri_raw(name, index_name, from_date, to_date)` — Total Return Index values from niftyindices.com
+  - `name`: short ticker code (e.g. `"NIFTYM150MOMNTM50"`); for standard indices same as `index_name`
+  - `index_name`: full display name (e.g. `"NIFTY MIDCAP150 MOMENTUM 50"`)
+- `index_type_list()` — returns top-level asset class types (`Equity`, `Fixed Income`, `Multi Asset`)
+- `index_subtype_list(index_type, index_group)` — returns sub-categories (e.g. `Broad Market Indices`, `Sectoral Indices`, `Strategy Indices`, `Thematic Indices`)
+- `index_name_list(index_type, index_group)` — returns all available index names for a given sub-category; use to discover valid symbols for `index_raw`, `index_pe_raw`, and `index_tri_raw`
+
+### Fixed
+- `index_raw` / `index_pe_raw` broken due to niftyindices.com API path change
+  - Updated endpoint paths from `/Backpage.aspx/` to `/BackPage/`
+  - Updated request format: params now wrapped in `cinfo` key with added `indexName` field
+  - Updated response parsing: API now returns a direct JSON array (was previously `r.json()['d']`)
+
 ## [0.34.0] - 2026-07-31
 
 ### Added

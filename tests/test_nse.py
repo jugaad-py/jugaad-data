@@ -245,37 +245,58 @@ class TestIndexHistory(TestCase):
             r = h._post_json("mypath", params=params)
         assert json.loads(r.json()['data']) == params
     
-"""
     def test_index_raw(self):
         symbol = "NIFTY 50"
-        from_date = date(2020, 6, 1)
-        to_date = date(2020, 7, 30) 
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
         d = nse.index_raw(symbol, from_date, to_date)
-        assert d[0]['Index Name'] == 'Nifty 50'
-        assert d[0]['HistoricalDate'] == '30 Jul 2020'
-        assert d[-1]['HistoricalDate'] == '01 Jun 2020'
-        app_name = nse.APP_NAME + '-index'
-        files = os.listdir(user_cache_dir(app_name, app_name))
-        assert len(files) == 2
-    
-    def test_index_csv(self):    
-        from_date = date(2001,1,15)
-        to_date = date(2001,6,15)
+        assert len(d) > 0
+        assert 'INDEX_NAME' in d[0]
+        assert d[0]['INDEX_NAME'] == 'Nifty 50'
+
+    def test_index_csv(self):
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
         raw = nse.index_raw("NIFTY 50", from_date, to_date)
         output = nse.index_csv("NIFTY 50", from_date, to_date)
         with open(output) as fp:
             text = fp.read()
             rows = [x.split(',') for x in text.split('\n')]
-            assert rows[1][2] == raw[0]['OPEN']
+        assert len(rows) > 1
 
-    def test_index_df(self):    
-        from_date = date(2001,1,15)
-        to_date = date(2001,6,15)
+    def test_index_df(self):
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
         index_df = nse.index_df("NIFTY 50", from_date, to_date)
-        assert len(index_df) > 100 
-        assert list(index_df.columns) == ['Index Name', 'INDEX_NAME', 'HistoricalDate', 'OPEN', 'HIGH',
-       'LOW', 'CLOSE'] 
-"""
+        assert len(index_df) > 0
+        assert 'Index Name' in index_df.columns
+        assert 'OPEN' in index_df.columns
+
+    def test_index_tri_raw(self):
+        to_date = datetime.now().date() - timedelta(days=1)
+        from_date = to_date - timedelta(days=30)
+        d = nse.index_tri_raw("NIFTY 50", "NIFTY 50", from_date, to_date)
+        assert len(d) > 0
+        assert 'Index Name' in d[0]
+        assert 'TotalReturnsIndex' in d[0]
+        assert 'Date' in d[0]
+
+    def test_index_type_list(self):
+        types = nse.index_type_list()
+        assert isinstance(types, list)
+        assert 'Equity' in types
+
+    def test_index_subtype_list(self):
+        subtypes = nse.index_subtype_list('Equity', 'Historical Index Data')
+        assert isinstance(subtypes, list)
+        assert 'Broad Market Indices' in subtypes
+        assert 'Sectoral Indices' in subtypes
+
+    def test_index_name_list(self):
+        names = nse.index_name_list('Broad Market Indices', 'Historical Index Data')
+        assert isinstance(names, list)
+        assert 'NIFTY 50' in names
+        assert len(names) > 5
 
 def test_expiry_dates():
     dt = date(2020,1,1)
