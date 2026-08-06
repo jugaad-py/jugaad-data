@@ -3,6 +3,8 @@ import collections
 import json
 import pickle
 import time
+import threading
+import tempfile
 from datetime import datetime, timedelta, date
 from concurrent.futures import ThreadPoolExecutor
 import click
@@ -106,8 +108,18 @@ def cached(app_name):
             if not os.path.isfile(path):    
                 os.makedirs(cache_dir, exist_ok=True)
                 j = function(**kw)
-                with open(path, 'wb') as fp:
-                    pickle.dump(j, fp)        
+                tmp_fd, tmp_path = tempfile.mkstemp(
+                    dir=cache_dir, prefix=file_name + ".", suffix=".tmp"
+                )
+                os.close(tmp_fd)
+                try:
+                    with open(tmp_path, 'wb') as fp:
+                        pickle.dump(j, fp)
+                    os.replace(tmp_path, path)
+                except BaseException:
+                    if os.path.exists(tmp_path):
+                        os.unlink(tmp_path)
+                    raise
             else:
                 with open(path, 'rb') as fp:
                     j = pickle.load(fp)
@@ -162,14 +174,22 @@ def live_cache(app_name):
         key = app_name.__name__ + '-'.join(inputs)
         now = datetime.now()
         time_out = self.time_out
-        try:
-            cache_obj = self._cache[key]
-            if now - cache_obj['timestamp'] < timedelta(seconds=time_out):
-                return cache_obj['value']
-        except:
+
+        if not hasattr(self, '_cache'):
             self._cache = {}
+        if not hasattr(self, '_cache_lock'):
+            self._cache_lock = threading.Lock()
+
+        with self._cache_lock:
+            cache_obj = self._cache.get(key)
+            if cache_obj and now - cache_obj['timestamp'] < timedelta(seconds=time_out):
+                return cache_obj['value']
+
         value = app_name(self, *args, **kwargs)
-        self._cache[key] = {'value': value, 'timestamp': now}
+
+        with self._cache_lock:
+            self._cache[key] = {'value': value, 'timestamp': now}
+
         return value
 
     return wrapper 
