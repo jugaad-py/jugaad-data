@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+# pre-push hook
+# -------------
+# Runs ALL tests (including live network calls to BSE/NSE) before pushing.
+# Live tests are intentionally NOT mocked so that any change to the external
+# APIs surfaces as a failure before the code reaches the remote.
+#
+# CI only runs non-live tests (pytest -m "not live") because network tests are
+# slow and unreliable in CI. The pre-push hook is the gating check for those.
+#
+# To enable this hook for your checkout, run:
+#     git config core.hooksPath .githooks
+#
+# Skip with:  git push --no-verify
+#
+set -euo pipefail
+
+# Use the project virtualenv python if present, else fall back to python3.
+if [[ -x "env/bin/python" ]]; then
+    PY="env/bin/python"
+else
+    PY="python3"
+fi
+
+echo "==> Running all tests before push..."
+if ! "$PY" -m pytest -p no:cacheprovider -q; then
+    echo
+    echo "!! Tests failed. Review failures above before pushing."
+    echo "   To skip these checks:  git push --no-verify"
+    exit 1
+fi
+echo "==> All tests passed."

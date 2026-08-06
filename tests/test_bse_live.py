@@ -37,6 +37,7 @@ def test_get_attachment_url():
     url_empty = bse.get_attachment_url("")
     assert url_empty is None
 
+@pytest.mark.live
 def test_corporate_announcements_basic():
     """Test basic corporate announcements functionality - single quick API call"""
     bse = BSELive()
@@ -55,6 +56,7 @@ def test_corporate_announcements_basic():
     assert isinstance(result["Table"], list)
     assert isinstance(result["Table1"], list)
 
+@pytest.mark.live
 def test_get_announcement_with_urls():
     """Test convenience method that includes attachment URLs"""
     bse = BSELive()
@@ -76,6 +78,7 @@ def test_get_announcement_with_urls():
         assert "attachment_url" in announcement
         assert "file_size_formatted" in announcement
 
+@pytest.mark.live
 def test_get_scrip_list():
     """Test scrip list functionality"""
     bse = BSELive()
@@ -92,6 +95,7 @@ def test_get_scrip_list():
         assert "scrip_id" in scrip
         assert "Scrip_Name" in scrip
 
+@pytest.mark.live
 def test_symbol_conversions():
     """Test symbol to scrip code conversion and vice versa"""
     bse = BSELive()
@@ -118,6 +122,7 @@ def test_symbol_conversions():
     invalid_code = bse.symbol_to_scrip_code("NONEXISTENT")
     assert invalid_code is None
 
+@pytest.mark.live
 def test_get_scrip_info():
     """Test getting detailed scrip information"""
     bse = BSELive()
@@ -138,6 +143,7 @@ def test_get_scrip_info():
     invalid_info = bse.get_scrip_info("NONEXISTENT")
     assert invalid_info is None
 
+@pytest.mark.live
 def test_corporate_announcements_by_symbol():
     """Test corporate announcements using symbol instead of scrip code"""
     bse = BSELive()

@@ -38,4 +38,5 @@ jobs:
         echo "Disabled linting"
     - name: Test with pytest
       run: |
-        pytest
+        # Skip live (network) tests - they run via the pre-push git hook
+        pytest -m "not live"
