@@ -27,7 +27,7 @@ Always use `env/bin/python -m pytest`. Bare `pytest` may pick up system Python. 
 Tests that make real network calls against external APIs (BSE/NSE) are marked `@pytest.mark.live`. They are **intentionally not mocked** so that any change to the upstream API surfaces as a failure. Because they are slow and depend on the network, they are excluded from CI and instead run on every `git push` via the `pre-push` hook.
 
 - CI runs `pytest -m "not live"`.
-- `pre-push` hook runs `pytest -m live`.
+- `pre-push` hook runs all tests (including live).
 
 To enable the hook for your checkout:
 ```bash
