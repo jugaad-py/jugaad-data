@@ -15,26 +15,16 @@ def test_bhavcopy():
     assert "RELIANCE" in r or "SBIN" in r  # At least some stock data present
     assert header in r
 
-@pytest.mark.live
 def test_bhavcopy_recent():
     """Test bhavcopy for recent date using UDiff format
     
     For dates >= Jul 8, 2024, should use UDiff format from daily-reports API.
     UDiff format has different columns: TradDt,BizDt,Sgmt,Src,FinInstrmTp,...
+    Uses a fixed past trading date so the response is cached and reliable.
     """
-    from datetime import datetime, timedelta
-    # Get a recent trading date
-    today = date.today()
-    # Skip if today is not a trading day (simplified check)
-    try:
-        r = bhavcopy_raw(today)
-        # Check that we got data (either format)
-        assert len(r) > 0
-        # Should have ISIN field in both formats
-        assert "ISIN" in r
-    except requests.RequestException:
-        # API may not have data for weekend/holiday
-        pytest.skip("No data available for today")
+    r = bhavcopy_raw(date(2024, 7, 10))
+    assert len(r) > 0
+    assert "ISIN" in r
 
 # def test_full_bhavcopy():
 #     r = full_bhavcopy_raw(date(2020,1,1))
