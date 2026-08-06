@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+# pre-push hook
+# -------------
+# Runs the "live" network tests (real API calls to BSE/NSE) before pushing.
+# These tests are intentionally NOT mocked so that any change to the external
+# APIs surfaces as a test failure before the code reaches the remote.
+#
+# These tests are slow and depend on the network, so they are excluded from the
+# CI pipeline (which runs `pytest` with the default `-m "not live"` filter) and
+# instead run here on every push.
+#
+# To enable this hook for your checkout, run:
+#     git config core.hooksPath .githooks
+#
+# Skip with:  git push --no-verify
+#
+set -euo pipefail
+
+# Use the project virtualenv python if present, else fall back to python3.
+if [[ -x "env/bin/python" ]]; then
+    PY="env/bin/python"
+else
+    PY="python3"
+fi
+
+echo "==> Running live (network) tests before push..."
+if ! "$PY" -m pytest -m live -p no:cacheprovider -q; then
+    echo
+    echo "!! Live tests failed. This usually means the BSE/NSE API has changed."
+    echo "   Update the code and tests to match the new API before pushing."
+    echo "   To skip these checks:  git push --no-verify"
+    exit 1
+fi
+echo "==> Live tests passed."

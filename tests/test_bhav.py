@@ -15,6 +15,7 @@ def test_bhavcopy():
     assert "RELIANCE" in r or "SBIN" in r  # At least some stock data present
     assert header in r
 
+@pytest.mark.live
 def test_bhavcopy_recent():
     """Test bhavcopy for recent date using UDiff format
     

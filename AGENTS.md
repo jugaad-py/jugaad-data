@@ -16,11 +16,24 @@ Never `pip install <pkg>` directly. Add new dependencies to `requirements.txt` (
 
 ### Run tests
 ```bash
-env/bin/python -m pytest                              # all tests
+env/bin/python -m pytest                              # non-live tests (default)
+env/bin/python -m pytest -m live                      # live/network tests
 env/bin/python -m pytest tests/test_nse.py            # single file
 env/bin/python -m pytest tests/test_nse.py::test_cookie  # single test
 ```
-Always use `env/bin/python -m pytest`. Bare `pytest` may pick up system Python. `pytest.ini` sets `testpaths = tests` to prevent crawling into `env/`.
+Always use `env/bin/python -m pytest`. Bare `pytest` may pick up system Python. `pytest.ini` sets `testpaths = tests` to prevent crawling into `env/`, and adds `-m "not live"` so the default invocation skips network tests.
+
+### Live vs offline tests
+Tests that make real network calls against external APIs (BSE/NSE) are marked `@pytest.mark.live`. They are **intentionally not mocked** so that any change to the upstream API surfaces as a failure. Because they are slow and depend on the network, they are excluded from CI and instead run on every `git push` via the `pre-push` hook.
+
+- CI runs `pytest -m "not live"`.
+- `pre-push` hook runs `pytest -m live`.
+
+To enable the hook for your checkout:
+```bash
+git config core.hooksPath .githooks
+```
+To skip live checks on a push: `git push --no-verify`.
 
 ### Watch tests (auto-rerun on change)
 ```bash

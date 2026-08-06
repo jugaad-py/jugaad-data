@@ -3,10 +3,12 @@ from jugaad_data.nse.live import NSELive
 from datetime import date, datetime
 n = NSELive()
 
+@pytest.mark.live
 def test_stock_quote():
     r = n.stock_quote("HDFCBANK")
     assert r['metaData']['symbol'] == 'HDFCBANK'
 
+@pytest.mark.live
 def test_stock_quote_fno():
     # Use a symbol with active derivatives (NIFTY or RELIANCE)
     r = n.stock_quote_fno("RELIANCE")
@@ -25,27 +27,32 @@ def test_stock_quote_fno():
     assert 'expiryDate' in contract
     assert 'lastPrice' in contract or contract.get('lastPrice') is not None
 
+@pytest.mark.live
 def test_trade_info():
     r = n.trade_info("HDFCBANK")
     assert "orderBook" in r
     assert "tradeInfo" in r
 
+@pytest.mark.live
 def test_market_status():
     r = n.market_status()
     assert "marketState" in r
 
+@pytest.mark.live
 def test_tick_data():
     d = n.tick_data("HDFC")
     assert "grapthData" in d
     d = n.tick_data("NIFTY 50", True)
     assert "grapthData" in d
 """
+@pytest.mark.live
 def test_market_turnover():
     d = n.market_turnover()
     assert "data" in d
     assert len(d['data']) > 1
     assert 'name' in d['data'][0]
 """
+@pytest.mark.live
 def test_eq_derivative_turnover():
     d = n.eq_derivative_turnover()
     assert "value" in d
@@ -59,47 +66,55 @@ def test_eq_derivative_turnover():
     assert len(d['value']) > 1
     assert len(d['volume']) > 1
 
+@pytest.mark.live
 def test_all_indices():
     d = n.all_indices()
     assert "advances" in d
     assert "declines" in d
     assert len(d['data']) > 1
 
+@pytest.mark.live
 def test_live_index():
     fresh = NSELive()
     d = fresh.live_index("NIFTY 50")
     assert "data" in d
     assert len(d['data']) >= 1
 
+@pytest.mark.live
 def test_index_option_chain():
     d = n.index_option_chain("NIFTY")
     assert "filtered" in d
     assert "records" in d
 
+@pytest.mark.live
 def test_equities_option_chain():
     d = n.equities_option_chain("RELIANCE")
     assert "filtered" in d
     assert "records" in d
     assert "data" in d["records"]
 
+@pytest.mark.live
 def test_currency_option_chain():
     d = n.currency_option_chain("USDINR")
     assert "filtered" in d
     assert "records" in d
     assert "data" in d["records"]
 
+@pytest.mark.live
 def test_live_fno():
     fresh = NSELive()
     d = fresh.live_fno()
     assert "data" in d
     assert "marketStatus" in d
 
+@pytest.mark.live
 def test_pre_open_market():
     d = n.pre_open_market("NIFTY")
     assert "declines" in d
     assert "unchanged" in d
     assert "advances" in d
 
+@pytest.mark.live
 def test_corporate_integrated_filing():
     # All filings (no filters)
     d = n.corporate_integrated_filing()
@@ -139,6 +154,7 @@ def test_corporate_integrated_filing():
     with pytest.raises(Exception):
         n.corporate_integrated_filing(from_date=date(2026, 1, 1))
 
+@pytest.mark.live
 def test_corporate_announcements():
     d = n.corporate_announcements()
     assert type(d) == list
