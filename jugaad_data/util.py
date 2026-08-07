@@ -4,7 +4,7 @@ import json
 import pickle
 import time
 import threading
-import tempfile
+import uuid
 from datetime import datetime, timedelta, date
 from concurrent.futures import ThreadPoolExecutor
 import click
@@ -108,21 +108,36 @@ def cached(app_name):
             if not os.path.isfile(path):    
                 os.makedirs(cache_dir, exist_ok=True)
                 j = function(**kw)
-                tmp_fd, tmp_path = tempfile.mkstemp(
-                    dir=cache_dir, prefix=file_name + ".", suffix=".tmp"
+                tmp_path = os.path.join(
+                    cache_dir,
+                    file_name + "." + uuid.uuid4().hex + ".tmp"
                 )
-                os.close(tmp_fd)
                 try:
                     with open(tmp_path, 'wb') as fp:
                         pickle.dump(j, fp)
-                    os.replace(tmp_path, path)
+                    for _ in range(10):
+                        try:
+                            os.replace(tmp_path, path)
+                            break
+                        except PermissionError:
+                            time.sleep(0.1)
+                    else:
+                        os.replace(tmp_path, path)
                 except BaseException:
                     if os.path.exists(tmp_path):
                         os.unlink(tmp_path)
                     raise
             else:
-                with open(path, 'rb') as fp:
-                    j = pickle.load(fp)
+                for _ in range(10):
+                    try:
+                        with open(path, 'rb') as fp:
+                            j = pickle.load(fp)
+                        break
+                    except PermissionError:
+                        time.sleep(0.1)
+                else:
+                    with open(path, 'rb') as fp:
+                        j = pickle.load(fp)
             return j
         return wrapper
     return _cached
