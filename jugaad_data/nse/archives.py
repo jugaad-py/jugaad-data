@@ -200,6 +200,7 @@ class NSEArchives:
         self._routes = {
                 "bhavcopy": "/content/historical/EQUITIES/{yyyy}/{MMM}/cm{dd}{MMM}{yyyy}bhav.csv.zip",
                 "bhavcopy_full": "/products/content/sec_bhavdata_full_{dd}{mm}{yyyy}.csv",
+                "bhavcopy_udiff": "/content/cm/BhavCopy_NSE_CM_0_0_0_{ymd}_F_0000.csv.zip",
                 "bulk_deals": "/content/equities/bulk.csv",
                 "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip"
             }
@@ -215,8 +216,10 @@ class NSEArchives:
         """Downloads raw bhavcopy text for a specific date
         
         Uses hybrid approach:
-        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from daily-reports API
-        - For older dates or if API unavailable: Falls back to BHAVDATA-FULL format
+        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from the
+          historical UDiFF archive, then the daily-reports API
+        - For older dates or if all UDiff sources fail: Falls back to
+          BHAVDATA-FULL format
         
         Note: UDiff format has different column structure than old format.
         Data is returned as-is without modification.
@@ -233,8 +236,16 @@ class NSEArchives:
         if isinstance(dt, datetime):
             dt = dt.date()
         
-        # For recent dates (>= Jul 8, 2024), try UDiff format from daily-reports API
+        # For recent dates (>= Jul 8, 2024), try UDiff format
         if dt >= self.udiff_start_date:
+            # 1) Historical UDiFF archive (covers all UDiFF-era dates)
+            try:
+                text = self.bhavcopy_udiff_raw(dt)
+                if text.splitlines()[0].startswith("TradDt"):
+                    return text
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
+                pass
+            # 2) Daily-reports API (current/previous trading day)
             try:
                 file_content = self.daily_reports.download_file(
                     'CM-UDIFF-BHAVCOPY-CSV',
@@ -247,12 +258,29 @@ class NSEArchives:
                     fname = zf.namelist()[0]
                     with zf.open(fname) as fp_csv:
                         return fp_csv.read().decode('utf-8')
-            except (ValueError, requests.RequestException, zipfile.BadZipFile) as e:
-                # Fall back to BHAVDATA-FULL
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
                 pass
         
         # Fallback: Use BHAVDATA-FULL (available for all historical dates)
         return self.full_bhavcopy_raw(dt)
+    
+    
+    @unzip
+    def bhavcopy_udiff_raw(self, dt):
+        """Downloads raw UDiFF bhavcopy text for a specific date
+        
+        Fetches the UDiFF archive (34-column format) which NSE serves from
+        Jul 5, 2024 onwards, i.e. for all dates >= udiff_start_date.
+        
+        Args:
+            dt (date or datetime): Trading date
+            
+        Returns:
+            str: UDiFF CSV content with stock market data
+        """
+        ymd = dt.strftime('%Y%m%d')
+        r = self.get("bhavcopy_udiff", ymd=ymd)
+        return r.content
     
     
     def bhavcopy_save(self, dt, dest, skip_if_present=True):
@@ -485,6 +513,7 @@ full_bhavcopy_raw = a.full_bhavcopy_raw
 full_bhavcopy_save = a.full_bhavcopy_save
 bhavcopy_fo_raw = a.bhavcopy_fo_raw
 bhavcopy_fo_save = a.bhavcopy_fo_save
+bhavcopy_udiff_raw = a.bhavcopy_udiff_raw
 ia = NSEIndicesArchives()
 bhavcopy_index_raw = ia.bhavcopy_index_raw
 bhavcopy_index_save = ia.bhavcopy_index_save
