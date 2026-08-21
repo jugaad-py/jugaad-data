@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.4] - 2026-08-21
+
+### Fixed
+- `bhavcopy_raw` returns legacy 15-column format for historical dates >= Jul 8, 2024
+  - The daily-reports API only serves the last two trading days, so older UDiFF-era
+    dates silently fell back to the legacy `sec_bhavdata_full` format
+  - Added `bhavcopy_udiff_raw` which fetches the 34-column UDiFF archive
+    (`/content/cm/BhavCopy_NSE_CM_0_0_0_{YYYYMMDD}_F_0000.csv.zip`) for all
+    UDiFF-era dates, keeping the daily-reports API and legacy BHAVDATA-FULL as
+    fallbacks
+
 ## [0.35.3] - 2026-08-21
 
 ### Added

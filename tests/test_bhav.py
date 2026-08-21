@@ -18,13 +18,29 @@ def test_bhavcopy():
 def test_bhavcopy_recent():
     """Test bhavcopy for recent date using UDiff format
     
-    For dates >= Jul 8, 2024, should use UDiff format from daily-reports API.
+    For dates >= Jul 8, 2024, should use UDiff format.
     UDiff format has different columns: TradDt,BizDt,Sgmt,Src,FinInstrmTp,...
     Uses a fixed past trading date so the response is cached and reliable.
     """
     r = bhavcopy_raw(date(2024, 7, 10))
     assert len(r) > 0
-    assert "ISIN" in r
+    header = r.splitlines()[0]
+    assert header.startswith("TradDt")
+    assert "ISIN" in header
+
+
+def test_bhavcopy_historical_udiff():
+    """Test bhavcopy for a historical UDiFF-era date
+
+    The daily-reports API only serves current/previous trading day, so older
+    UDiFF dates must come from the historical UDiFF archive. Regression test
+    for bhavcopy_raw silently returning legacy format for dates >= Jul 8, 2024.
+    """
+    r = bhavcopy_raw(date(2025, 7, 21))
+    header = r.splitlines()[0]
+    assert header.startswith("TradDt")
+    assert "ISIN" in header
+    assert not header.startswith("SYMBOL, SERIES")
 
 # def test_full_bhavcopy():
 #     r = full_bhavcopy_raw(date(2020,1,1))
