@@ -170,6 +170,7 @@ def unzip(function):
 
 class NSEArchives:
     base_url = "https://nsearchives.nseindia.com/"
+    reports_url = "https://www.nseindia.com/api/reports"
     """Conventions
            d - 1, 12 (without leading zero)
           dd - 01, 21 (day of the month with leading zero)
@@ -218,8 +219,9 @@ class NSEArchives:
         Uses hybrid approach:
         - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from the
           historical UDiFF archive, then the daily-reports API
-        - For older dates or if all UDiff sources fail: Falls back to
-          BHAVDATA-FULL format
+        - If UDiff is not available (older dates or both UDiff sources fail):
+          Falls back to the old bhavcopy format (cm bhavcopy zip) fetched via
+          the NSE reports API. This format includes the ISIN field.
         
         Note: UDiff format has different column structure than old format.
         Data is returned as-is without modification.
@@ -261,9 +263,53 @@ class NSEArchives:
             except (ValueError, requests.RequestException, zipfile.BadZipFile):
                 pass
         
-        # Fallback: Use BHAVDATA-FULL (available for all historical dates)
-        return self.full_bhavcopy_raw(dt)
+        # Fallback: Old bhavcopy format (includes ISIN field) via reports API
+        return self.bhavcopy_old_raw(dt)
     
+    
+    @unzip
+    def bhavcopy_old_raw(self, dt):
+        """Downloads raw bhavcopy text in the old format (includes ISIN field)
+        
+        Fetches the legacy CM bhavcopy zip (cm{dd}{MMM}{yyyy}bhav.csv.zip)
+        through the NSE reports API:
+        https://www.nseindia.com/api/reports?archives=[{"name": "CM - Bhavcopy(csv)",
+        "type": "daily-reports", "category": "capital-market", "section": "equities"}]
+        
+        The file is available for dates before the UDiff switch (Jul 2024);
+        NSE returns 404 for newer dates.
+        
+        Args:
+            dt (date or datetime): Trading date
+            
+        Returns:
+            str: Old-format CSV content with stock market data
+            
+        Raises:
+            requests.RequestException: If the file is unavailable for given date
+        """
+        if isinstance(dt, datetime):
+            dt = dt.date()
+        archives = [{"name": "CM - Bhavcopy(csv)",
+                     "type": "daily-reports",
+                     "category": "capital-market",
+                     "section": "equities"}]
+        params = {
+            "archives": json.dumps(archives),
+            "date": dt.strftime("%d-%b-%Y"),
+            "type": "equities",
+            "mode": "single",
+        }
+        headers = {"referer": "https://www.nseindia.com/all-reports"}
+        r = self.s.get(self.reports_url, params=params,
+                       timeout=self.timeout, headers=headers)
+        if r.status_code == 403 and not self.s.cookies:
+            # www.nseindia.com may require cookies from the landing page first
+            self.s.get("https://www.nseindia.com", timeout=self.timeout)
+            r = self.s.get(self.reports_url, params=params,
+                           timeout=self.timeout, headers=headers)
+        r.raise_for_status()
+        return r.content
     
     @unzip
     def bhavcopy_udiff_raw(self, dt):
@@ -514,6 +560,7 @@ full_bhavcopy_save = a.full_bhavcopy_save
 bhavcopy_fo_raw = a.bhavcopy_fo_raw
 bhavcopy_fo_save = a.bhavcopy_fo_save
 bhavcopy_udiff_raw = a.bhavcopy_udiff_raw
+bhavcopy_old_raw = a.bhavcopy_old_raw
 ia = NSEIndicesArchives()
 bhavcopy_index_raw = ia.bhavcopy_index_raw
 bhavcopy_index_save = ia.bhavcopy_index_save

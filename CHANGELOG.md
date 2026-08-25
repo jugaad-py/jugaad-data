@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.5] - 2026-08-25
+
+### Changed
+- `bhavcopy_raw` now falls back to the old bhavcopy format (which includes the
+  ISIN field) instead of the full bhavcopy (`sec_bhavdata_full`) when UDiff is
+  unavailable
+- Added `bhavcopy_old_raw` which fetches the legacy `cm{dd}{MMM}{yyyy}bhav.csv.zip`
+  through the NSE reports API
+  (`/api/reports?archives=[{"name": "CM - Bhavcopy(csv)", ...}]&date={DD-MMM-YYYY}&type=equities&mode=single`)
+- Marked network-dependent tests in `tests/test_bhav.py` as `@pytest.mark.live`
+  and added mocked offline tests for the fallback logic (CI-safe)
+
 ## [0.35.4] - 2026-08-21
 
 ### Fixed
