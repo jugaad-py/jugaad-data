@@ -101,6 +101,21 @@ def test_bhavcopy_historical_udiff():
 #     assert '2019' in e.value.args[0]    
 
 @pytest.mark.live
+def test_bhavcopy_fo_recent():
+    """Test derivatives bhavcopy for recent date using UDiff format
+
+    For dates >= Jul 8, 2024, should use UDiff format from daily-reports API.
+    UDiff format has different columns: TradDt,BizDt,Sgmt,Src,FinInstrmTp,...
+    """
+    today = date.today()
+    try:
+        r = bhavcopy_fo_raw(today)
+        assert len(r) > 0
+        assert "TckrSymb" in r
+    except (requests.RequestException, zipfile.BadZipFile):
+        pytest.skip("No data available for today")
+
+@pytest.mark.live
 def test_bhavcopy_fo():
     r = bhavcopy_fo_raw(date(2020,1,1))
     header = "INSTRUMENT,SYMBOL,EXPIRY_DT,STRIKE_PR,OPTION_TYP,OPEN,HIGH,LOW,CLOSE,SETTLE_PR,CONTRACTS,VAL_INLAKH,OPEN_INT,CHG_IN_O"
@@ -112,6 +127,19 @@ def test_bhavcopy_fo():
 #     header = "Index Name,Index Date,Open Index Value,High Index Value,Low Index Value,Closing Index Value,Points Change,Change(%)"
 #     assert "NIFTY" in r
 #     assert header in r
+
+@pytest.mark.live
+def test_expiry_dates_recent():
+    """expiry_dates() should work against recent UDiff-format bhavcopy data too,
+    using the same legacy instrument_type names (FUTIDX, OPTIDX, FUTSTK, OPTSTK).
+    """
+    today = date.today()
+    try:
+        dts = expiry_dates(today, "FUTIDX", "NIFTY")
+        assert len(dts) > 0
+        assert all(isinstance(d, date) for d in dts)
+    except (requests.RequestException, zipfile.BadZipFile, ValueError):
+        pytest.skip("No data available for today")
 
 @pytest.mark.live
 def test_expiry_dates():
@@ -230,6 +258,62 @@ def test_bhavcopy_old_raw_raises_when_file_missing():
     with patch.object(n.s, "get", return_value=resp):
         with pytest.raises(requests.exceptions.HTTPError):
             n.bhavcopy_old_raw(date(2024, 7, 10))
+
+def _fo_udiff_zip_bytes(text):
+    fp = io.BytesIO()
+    with zipfile.ZipFile(fp, "w") as zf:
+        zf.writestr("BhavCopy_NSE_FO_0_0_0_20240710_F_0000.csv", text)
+    return fp.getvalue()
+
+def test_bhavcopy_fo_raw_uses_udiff_when_available():
+    """For dates >= udiff_start_date, bhavcopy_fo_raw must use the
+    FO-UDIFF-BHAVCOPY-CSV daily-reports file instead of the legacy route."""
+    n = NSEArchives()
+    udiff_text = "TradDt,BizDt,Sgmt,Src,FinInstrmTp,TckrSymb,XpryDt\n2024-07-10,..."
+    with patch.object(n.daily_reports, "download_file",
+                      return_value=_fo_udiff_zip_bytes(udiff_text)) as m_dl, \
+         patch.object(n, "_bhavcopy_fo_legacy_raw") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2024, 7, 10))
+    assert out == udiff_text
+    m_dl.assert_called_once_with(
+        'FO-UDIFF-BHAVCOPY-CSV', trading_date=date(2024, 7, 10), segment='FO'
+    )
+    m_legacy.assert_not_called()
+
+def test_bhavcopy_fo_raw_falls_back_to_legacy_when_udiff_unavailable():
+    """When the UDIFF daily-reports file is unavailable, fall back to the
+    legacy DERIVATIVES route."""
+    n = NSEArchives()
+    with patch.object(n.daily_reports, "download_file",
+                      side_effect=ValueError("not found")), \
+         patch.object(n, "_bhavcopy_fo_legacy_raw",
+                      return_value="INSTRUMENT,SYMBOL,...") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2024, 7, 10))
+    assert out == "INSTRUMENT,SYMBOL,..."
+    m_legacy.assert_called_once_with(date(2024, 7, 10))
+
+def test_bhavcopy_fo_raw_skips_udiff_for_pre_udiff_dates():
+    """Pre-UDiff dates must go straight to the legacy fallback"""
+    n = NSEArchives()
+    m_dl = MagicMock()
+    with patch.object(n.daily_reports, "download_file", m_dl), \
+         patch.object(n, "_bhavcopy_fo_legacy_raw",
+                      return_value="INSTRUMENT,SYMBOL,...") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2020, 1, 1))
+    assert m_dl.call_count == 0
+    m_legacy.assert_called_once_with(date(2020, 1, 1))
+
+def test_expiry_dates_parses_udiff_format():
+    """expiry_dates() must correctly parse UDiff-format FO bhavcopy rows,
+    translating legacy instrument_type names to their UDiff equivalents."""
+    udiff_text = (
+        "TradDt,FinInstrmTp,TckrSymb,XpryDt,TtlTradgVol\n"
+        "2024-07-10,IDF,NIFTY,2024-07-25,15000\n"
+        "2024-07-10,IDO,NIFTY,2024-07-25,5\n"
+    )
+    with patch("jugaad_data.nse.archives.bhavcopy_fo_raw", return_value=udiff_text):
+        dts = expiry_dates(date(2024, 7, 10), "FUTIDX", "NIFTY")
+    assert dts == [date(2024, 7, 25)]
 
 """
 @pytest.mark.live
