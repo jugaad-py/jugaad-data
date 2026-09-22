@@ -390,15 +390,46 @@ class NSEArchives:
         with open(fname, 'w') as fp:
             fp.write(text)
 
-    @unzip
     def bhavcopy_fo_raw(self, dt):
-        """Downloads raw bhavcopy text for a specific date"""
+        """Downloads raw derivatives bhavcopy text for a specific date
+
+        Uses hybrid approach:
+        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from daily-reports API
+        - For older dates or if API unavailable: Falls back to legacy DERIVATIVES format
+
+        Note: UDiff format has a different column structure than the legacy format.
+        Data is returned as-is without modification.
+        """
+        if isinstance(dt, datetime):
+            dt = dt.date()
+
+        if dt >= self.udiff_start_date:
+            try:
+                file_content = self.daily_reports.download_file(
+                    'FO-UDIFF-BHAVCOPY-CSV',
+                    trading_date=dt,
+                    segment='FO'
+                )
+                fp = io.BytesIO(file_content)
+                with zipfile.ZipFile(file=fp) as zf:
+                    fname = zf.namelist()[0]
+                    with zf.open(fname) as fp_csv:
+                        return fp_csv.read().decode('utf-8')
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
+                # Fall back to legacy DERIVATIVES format
+                pass
+
+        return self._bhavcopy_fo_legacy_raw(dt)
+
+    @unzip
+    def _bhavcopy_fo_legacy_raw(self, dt):
+        """Downloads raw bhavcopy text from the legacy DERIVATIVES route"""
         dd = dt.strftime('%d')
         MMM = dt.strftime('%b').upper()
         yyyy = dt.year
         r = self.get("bhavcopy_fo", yyyy=yyyy, MMM=MMM, dd=dd)
         return r.content
-    
+
     def bhavcopy_fo_save(self, dt, dest, skip_if_present=True):
         """ Saves Derivatives Bhavcopy to a directory """
         fmt = "fo%d%b%Ybhav.csv"
@@ -565,22 +596,48 @@ ia = NSEIndicesArchives()
 bhavcopy_index_raw = ia.bhavcopy_index_raw
 bhavcopy_index_save = ia.bhavcopy_index_save
 
+# Maps legacy INSTRUMENT values to their UDiff FinInstrmTp equivalents,
+# so callers can keep using the legacy names regardless of which format
+# bhavcopy_fo_raw() ends up returning for a given date.
+_LEGACY_TO_UDIFF_INSTRUMENT_TYPE = {
+    "FUTIDX": "IDF",
+    "OPTIDX": "IDO",
+    "FUTSTK": "STF",
+    "OPTSTK": "STO",
+}
+
 def expiry_dates(dt, instrument_type="", symbol="", contracts=0):
     txt = bhavcopy_fo_raw(dt)
-    rows = txt.split("\n")
-    rows.pop(0) # Remove headers
-    if len(rows[-1].split(',')) <= 10:
-        rows.pop(-1) # Remove last blank row
-    cells = [row.split(',') for row in rows]
+    rows = [row for row in txt.split("\n") if row.strip()]
+    reader = csv.DictReader(rows)
+
+    if reader.fieldnames and "TckrSymb" in reader.fieldnames:
+        # UDiff format (dates >= NSEArchives.udiff_start_date)
+        instrument_col, symbol_col, expiry_col, contracts_col = (
+            "FinInstrmTp", "TckrSymb", "XpryDt", "TtlTradgVol"
+        )
+        expiry_fmt = "%Y-%m-%d"
+        if instrument_type:
+            instrument_type = _LEGACY_TO_UDIFF_INSTRUMENT_TYPE.get(
+                instrument_type, instrument_type
+            )
+    else:
+        # Legacy format
+        instrument_col, symbol_col, expiry_col, contracts_col = (
+            "INSTRUMENT", "SYMBOL", "EXPIRY_DT", "CONTRACTS"
+        )
+        expiry_fmt = "%d-%b-%Y"
+
+    cells = list(reader)
     if instrument_type:
-        cells = filter(lambda x: x[0]==instrument_type, cells)
+        cells = filter(lambda x: x[instrument_col] == instrument_type, cells)
     if symbol:
-        cells = filter(lambda x: x[1] == symbol, cells)
-    
-    cells = filter(lambda x: int(x[10])>contracts, cells)
-    
-    dts_txt = [row[2] for row in cells]
-    dts = [datetime.strptime(d, "%d-%b-%Y").date() for d in dts_txt]
+        cells = filter(lambda x: x[symbol_col] == symbol, cells)
+
+    cells = filter(lambda x: int(x[contracts_col]) > contracts, cells)
+
+    dts_txt = [row[expiry_col] for row in cells]
+    dts = [datetime.strptime(d, expiry_fmt).date() for d in dts_txt]
     return list(set(dts))
 
 

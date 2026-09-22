@@ -9,19 +9,31 @@ Guidance for OpenCode (and other coding agents) working in this repo.
 pip install -e .
 pip install -r requirements.dev.txt
 ```
-Use the project virtualenv at `env/`. Always prefix commands with `env/bin/` on macOS/Linux.
 
-### Dependency rule
-Never `pip install <pkg>` directly. Add new dependencies to `requirements.txt` (runtime) or `requirements.dev.txt` (dev/test), then install via `pip install -r <file>`.
+> **Dependency rule:** Never install packages directly with `pip install <pkg>`. Always add new dependencies to `requirements.txt` (runtime) or `requirements.dev.txt` (dev/test), then install via `pip install -r <file>`.
+
+> **Virtualenv rule:** Always use the project virtualenv at `env/`.
+> - Windows: `env/Scripts/python.exe` and `env/Scripts/pip3.exe` (or `env/Scripts/python.exe -m pip`). Note: `env/Scripts/pip` does not exist — use `pip3.exe` instead.
+> - macOS/Linux: `env/bin/python` and `env/bin/pip` (or `env/bin/python -m pip`).
+
+> **Git push rule:** This repo uses `core.sshCommand = ssh -i ~/.ssh/github_personal -o IdentitiesOnly=yes` (set in local git config). Always push using this repo's git config — never override with `-F /dev/null`.
 
 ### Run tests
 ```bash
-env/bin/python -m pytest                              # all tests
-env/bin/python -m pytest -m live                      # live/network tests only
-env/bin/python -m pytest tests/test_nse.py            # single file
-env/bin/python -m pytest tests/test_nse.py::test_cookie  # single test
+# Windows
+env/Scripts/python.exe -m pytest                              # all tests
+env/Scripts/python.exe -m pytest -m live                      # live/network tests only
+env/Scripts/python.exe -m pytest tests/test_nse.py            # single file
+env/Scripts/python.exe -m pytest tests/test_nse.py::test_cookie  # single test
+
+# macOS/Linux
+env/bin/python -m pytest
+env/bin/python -m pytest -m live
+env/bin/python -m pytest tests/test_nse.py
+env/bin/python -m pytest tests/test_nse.py::test_cookie
 ```
-Always use `env/bin/python -m pytest`. Bare `pytest` may pick up system Python. `pytest.ini` sets `testpaths = tests` to prevent crawling into `env/`.
+
+> **pytest rule:** Always run pytest via the venv's `python -m pytest` (`env/Scripts/python.exe` on Windows, `env/bin/python` on macOS/Linux). Do not use bare `pytest` — it may use the system Python and pick up tests from `env/`. A `pytest.ini` with `testpaths = tests` is in place to prevent crawling into `env/`.
 
 ### Live vs offline tests
 Tests that make real network calls against external APIs (BSE/NSE) are marked `@pytest.mark.live`. They are **intentionally not mocked** so that any change to the upstream API surfaces as a failure. Because they are slow and depend on the network, they are excluded from CI and instead run on every `git push` via the `pre-push` hook.
@@ -37,7 +49,7 @@ To skip live checks on a push: `git push --no-verify`.
 
 ### Watch tests (auto-rerun on change)
 ```bash
-env/bin/ptw
+ptw
 ```
 
 ### CLI entry point
@@ -46,7 +58,7 @@ jdata --help
 ```
 
 ### Version info
-Version is stored in two places and both must be updated:
+Version is stored in two places and both must be updated together:
 - `pyproject.toml` → `version = "X.Y.Z"`
 - `jugaad_data/__init__.py` → `__version__ = "X.Y.Z"`
 
@@ -92,7 +104,7 @@ Any public name in those modules becomes importable from `jugaad_data.nse`.
 GitHub Actions workflow `run-tests.yml` runs on push/PR to `master`:
 - Python 3.10 on ubuntu-latest
 - Installs requirements + `flake8 pytest` (but flake8 lint step is disabled/commented out)
-- Runs `pytest`
+- Runs `pytest -m "not live"`
 
 ## Additional instructions
-This repo also has `.github/copilot-instructions.md` (Copilot-specific developer workflow) and `CLAUDE.md` (Claude Code guidance — **note that CLAUDE.md contains Windows-specific `env/Scripts/` paths that are incorrect for this macOS environment**).
+This repo also has `.github/copilot-instructions.md` (Copilot-specific developer workflow). `AGENTS.md` is the single source of instructions for Claude Code and other coding agents — there is no separate `CLAUDE.md`.
