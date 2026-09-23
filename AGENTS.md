@@ -57,10 +57,12 @@ ptw
 jdata --help
 ```
 
-### Version info
-Version is stored in two places and both must be updated together:
-- `pyproject.toml` → `version = "X.Y.Z"`
-- `jugaad_data/__init__.py` → `__version__ = "X.Y.Z"`
+### Version bump (mandatory for every feature/fix)
+> **Version bump rule (MANDATORY):** Any commit that implements a feature or fix (i.e. changes runtime behavior — not pure docs/comments/test-only changes) MUST bump the version, in the same commit or PR, in both places together:
+> - `pyproject.toml` → `version = "X.Y.Z"`
+> - `jugaad_data/__init__.py` → `__version__ = "X.Y.Z"`
+>
+> Default to a patch bump (`X.Y.Z` → `X.Y.Z+1`) unless the change is a breaking API change (bump minor) or the user says otherwise. Treat "bump the version" as part of the definition of done for the task — check it before the final commit/push, not as an afterthought after tests pass.
 
 `check-version.ps1` (PowerShell) verifies the version doesn't already exist on PyPI before release.
 
