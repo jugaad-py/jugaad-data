@@ -265,12 +265,30 @@ def _fo_udiff_zip_bytes(text):
         zf.writestr("BhavCopy_NSE_FO_0_0_0_20240710_F_0000.csv", text)
     return fp.getvalue()
 
-def test_bhavcopy_fo_raw_uses_udiff_when_available():
-    """For dates >= udiff_start_date, bhavcopy_fo_raw must use the
+def test_bhavcopy_fo_raw_uses_historical_udiff_archive_when_available():
+    """For dates >= udiff_start_date, bhavcopy_fo_raw must prefer the
+    permanent historical UDiFF F&O archive over the daily-reports API and
+    the legacy route."""
+    n = NSEArchives()
+    udiff_text = "TradDt,BizDt,Sgmt,Src,FinInstrmTp,TckrSymb,XpryDt\n2024-07-10,..."
+    with patch.object(n, "bhavcopy_fo_udiff_raw",
+                      return_value=udiff_text) as m_archive, \
+         patch.object(n.daily_reports, "download_file") as m_dl, \
+         patch.object(n, "_bhavcopy_fo_legacy_raw") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2024, 7, 10))
+    assert out == udiff_text
+    m_archive.assert_called_once_with(date(2024, 7, 10))
+    m_dl.assert_not_called()
+    m_legacy.assert_not_called()
+
+def test_bhavcopy_fo_raw_uses_daily_reports_when_archive_unavailable():
+    """When the historical UDiFF archive is unavailable, fall back to the
     FO-UDIFF-BHAVCOPY-CSV daily-reports file instead of the legacy route."""
     n = NSEArchives()
     udiff_text = "TradDt,BizDt,Sgmt,Src,FinInstrmTp,TckrSymb,XpryDt\n2024-07-10,..."
-    with patch.object(n.daily_reports, "download_file",
+    with patch.object(n, "bhavcopy_fo_udiff_raw",
+                      side_effect=requests.exceptions.RequestException("boom")), \
+         patch.object(n.daily_reports, "download_file",
                       return_value=_fo_udiff_zip_bytes(udiff_text)) as m_dl, \
          patch.object(n, "_bhavcopy_fo_legacy_raw") as m_legacy:
         out = n.bhavcopy_fo_raw(date(2024, 7, 10))
@@ -281,10 +299,12 @@ def test_bhavcopy_fo_raw_uses_udiff_when_available():
     m_legacy.assert_not_called()
 
 def test_bhavcopy_fo_raw_falls_back_to_legacy_when_udiff_unavailable():
-    """When the UDIFF daily-reports file is unavailable, fall back to the
-    legacy DERIVATIVES route."""
+    """When neither UDIFF source is available, fall back to the legacy
+    DERIVATIVES route."""
     n = NSEArchives()
-    with patch.object(n.daily_reports, "download_file",
+    with patch.object(n, "bhavcopy_fo_udiff_raw",
+                      side_effect=requests.exceptions.RequestException("boom")), \
+         patch.object(n.daily_reports, "download_file",
                       side_effect=ValueError("not found")), \
          patch.object(n, "_bhavcopy_fo_legacy_raw",
                       return_value="INSTRUMENT,SYMBOL,...") as m_legacy:
@@ -296,10 +316,12 @@ def test_bhavcopy_fo_raw_skips_udiff_for_pre_udiff_dates():
     """Pre-UDiff dates must go straight to the legacy fallback"""
     n = NSEArchives()
     m_dl = MagicMock()
-    with patch.object(n.daily_reports, "download_file", m_dl), \
+    with patch.object(n, "bhavcopy_fo_udiff_raw") as m_archive, \
+         patch.object(n.daily_reports, "download_file", m_dl), \
          patch.object(n, "_bhavcopy_fo_legacy_raw",
                       return_value="INSTRUMENT,SYMBOL,...") as m_legacy:
         out = n.bhavcopy_fo_raw(date(2020, 1, 1))
+    assert m_archive.call_count == 0
     assert m_dl.call_count == 0
     m_legacy.assert_called_once_with(date(2020, 1, 1))
 

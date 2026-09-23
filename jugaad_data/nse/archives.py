@@ -203,7 +203,8 @@ class NSEArchives:
                 "bhavcopy_full": "/products/content/sec_bhavdata_full_{dd}{mm}{yyyy}.csv",
                 "bhavcopy_udiff": "/content/cm/BhavCopy_NSE_CM_0_0_0_{ymd}_F_0000.csv.zip",
                 "bulk_deals": "/content/equities/bulk.csv",
-                "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip"
+                "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip",
+                "bhavcopy_fo_udiff": "/content/fo/BhavCopy_NSE_FO_0_0_0_{ymd}_F_0000.csv.zip"
             }
         self.daily_reports = NSEDailyReports()
         
@@ -394,8 +395,10 @@ class NSEArchives:
         """Downloads raw derivatives bhavcopy text for a specific date
 
         Uses hybrid approach:
-        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from daily-reports API
-        - For older dates or if API unavailable: Falls back to legacy DERIVATIVES format
+        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from the
+          historical UDiFF archive, then the daily-reports API
+        - For older dates or if both UDiff sources fail: Falls back to legacy
+          DERIVATIVES format
 
         Note: UDiff format has a different column structure than the legacy format.
         Data is returned as-is without modification.
@@ -404,6 +407,14 @@ class NSEArchives:
             dt = dt.date()
 
         if dt >= self.udiff_start_date:
+            # 1) Historical UDiFF archive (covers all UDiFF-era dates)
+            try:
+                text = self.bhavcopy_fo_udiff_raw(dt)
+                if text.splitlines()[0].startswith("TradDt"):
+                    return text
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
+                pass
+            # 2) Daily-reports API (current/previous trading day)
             try:
                 file_content = self.daily_reports.download_file(
                     'FO-UDIFF-BHAVCOPY-CSV',
@@ -420,6 +431,23 @@ class NSEArchives:
                 pass
 
         return self._bhavcopy_fo_legacy_raw(dt)
+
+    @unzip
+    def bhavcopy_fo_udiff_raw(self, dt):
+        """Downloads raw UDiFF derivatives bhavcopy text for a specific date
+
+        Fetches the permanent historical UDiFF F&O archive which NSE serves
+        from Jul 8, 2024 onwards, i.e. for all dates >= udiff_start_date.
+
+        Args:
+            dt (date or datetime): Trading date
+
+        Returns:
+            str: UDiFF CSV content with derivatives market data
+        """
+        ymd = dt.strftime('%Y%m%d')
+        r = self.get("bhavcopy_fo_udiff", ymd=ymd)
+        return r.content
 
     @unzip
     def _bhavcopy_fo_legacy_raw(self, dt):
