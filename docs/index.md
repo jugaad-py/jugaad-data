@@ -28,6 +28,9 @@ Complete documentation for the `jugaad-data` Python library for downloading hist
 #### Economic Data
 - [RBI Guide](RBI_GUIDE.md) - Policy rates, T-bills, government securities
 
+#### Mutual Fund Data
+- [AMFI Guide](AMFI_GUIDE.md) - Mutual fund NAV history from AMFI
+
 ## Key Features
 
 ✅ **Download Bhavcopies**
@@ -164,6 +167,21 @@ Reserve Bank of India economic data:
 
 **Key Methods:**
 - `current_rates()` - All current rates and indices
+
+### AMFI (`jugaad_data.amfi`)
+
+Mutual fund NAV history from the AMFI website:
+
+- Daily NAV for every scheme, AMC and scheme type (Open Ended, Close Ended, Interval Fund)
+- Scheme category and AMC carried as columns on every row
+- Date range downloads, pandas DataFrame or CSV output
+
+**Key Functions:**
+- `nav_history_raw(from_date, to_date)` - NAV history rows
+- `nav_history_df(from_date, to_date)` - NAV history DataFrame
+- `nav_history_csv(from_date, to_date, output)` - Save NAV history to CSV
+- `scheme_type_list()`, `category_list(...)`, `amc_list(...)` - Discovery helpers
+- `mf` argument - Restrict the download to a single AMC
 
 ## Data Structures
 
