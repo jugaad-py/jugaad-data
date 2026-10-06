@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.10] - 2026-10-06
+
+### Added
+- `jugaad_data.amfi` — download mutual fund NAV history from AMFI
+  (`DownloadNAVHistoryReport_Po.aspx`)
+  - `nav_history_raw(from_date, to_date, mf="")` — flat list of rows, each
+    carrying `scheme_type`, `category` and `amc` context columns
+  - `nav_history_df(...)` — pandas DataFrame (`nav` float, `date` datetime)
+  - `nav_history_csv(...)` — save to CSV
+  - `scheme_type_list()`, `category_list(...)`, `amc_list(...)` — discovery helpers
+  - `jdata nav -f <from> -t <to> [-a <amc code>] [-o <file>]` — CLI command
+
 ## [0.35.5] - 2026-08-25
 
 ### Changed
