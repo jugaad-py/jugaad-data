@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor
 import requests
 from jugaad_data import nse
+from jugaad_data import amfi
 
 
 
@@ -207,6 +208,28 @@ def stock(symbol, from_, to, expiry, instru, price, ce, output):
  
     
     
+
+@cli.command("nav")
+@click.option("--from", "-f", "from_", required=True, help="From date - yyyy-mm-dd")
+@click.option("--to", "-t", required=True, help="To date - yyyy-mm-dd")
+@click.option("--amc", "-a", default="", help="AMFI AMC code to restrict download to a single AMC")
+@click.option("--output", "-o", default="", help="Full path for output file")
+def nav(from_, to, amc, output):
+    """Download mutual fund NAV history from AMFI
+
+    $jdata nav -f 2026-09-01 -t 2026-10-06 -o nav.csv
+    """
+    import traceback
+    from_date = datetime.strptime(from_, "%Y-%m-%d").date()
+    to_date = datetime.strptime(to, "%Y-%m-%d").date()
+    try:
+        o = amfi.nav_history_csv(from_date, to_date, output, mf=amc)
+    except Exception as e:
+        print(e)
+        traceback.print_exc()
+        return
+    click.echo("\nSaved file to : {}".format(o))
+
 
 if __name__ == "__main__":
     cli()

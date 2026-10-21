@@ -23,8 +23,9 @@ https://marketsetup.in/documentation/jugaad-data/
 | NSE      | Stocks     | Yes        |
 | NSE      | Stocks F&O | Yes        |
 | NSE      | Index      | Yes    |
-| NSE      | Index F&O  | Yes        |
+| NSE      | Index F&O  | Yes    |
 | RBI	   | Current Rates| Yes |
+| AMFI     | Mutual Fund NAV | Yes |
 
 # Installation
 
@@ -134,6 +135,26 @@ index_name_list('Broad Market Indices', 'Historical Index Data')  # ['NIFTY 50',
 #   'Total returns Index Values '
 #   'P/E, P/B & Div.Yield values'
 ```
+
+## Download mutual fund NAV history (AMFI)
+
+```python
+from datetime import date
+from jugaad_data.amfi import nav_history_raw, nav_history_df, nav_history_csv
+
+# Raw rows (every scheme / AMC / date)
+rows = nav_history_raw(date(2026, 9, 1), date(2026, 10, 6))
+
+# pandas DataFrame (nav as float, date as datetime)
+df = nav_history_df(date(2026, 9, 1), date(2026, 10, 6))
+df[df["scheme_type"] == "Interval Fund"].head()
+
+# Save to CSV
+nav_history_csv(date(2026, 9, 1), date(2026, 10, 6), output="nav.csv")
+```
+
+Every row carries `scheme_type` (Open Ended / Close Ended / Interval Fund),
+`category` (e.g. Money Market) and `amc` alongside the scheme NAV fields.
 
 ## Download historical derivatives (F&O) data
 

@@ -170,6 +170,7 @@ def unzip(function):
 
 class NSEArchives:
     base_url = "https://nsearchives.nseindia.com/"
+    reports_url = "https://www.nseindia.com/api/reports"
     """Conventions
            d - 1, 12 (without leading zero)
           dd - 01, 21 (day of the month with leading zero)
@@ -200,8 +201,10 @@ class NSEArchives:
         self._routes = {
                 "bhavcopy": "/content/historical/EQUITIES/{yyyy}/{MMM}/cm{dd}{MMM}{yyyy}bhav.csv.zip",
                 "bhavcopy_full": "/products/content/sec_bhavdata_full_{dd}{mm}{yyyy}.csv",
+                "bhavcopy_udiff": "/content/cm/BhavCopy_NSE_CM_0_0_0_{ymd}_F_0000.csv.zip",
                 "bulk_deals": "/content/equities/bulk.csv",
-                "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip"
+                "bhavcopy_fo": "/content/historical/DERIVATIVES/{yyyy}/{MMM}/fo{dd}{MMM}{yyyy}bhav.csv.zip",
+                "bhavcopy_fo_udiff": "/content/fo/BhavCopy_NSE_FO_0_0_0_{ymd}_F_0000.csv.zip"
             }
         self.daily_reports = NSEDailyReports()
         
@@ -215,8 +218,11 @@ class NSEArchives:
         """Downloads raw bhavcopy text for a specific date
         
         Uses hybrid approach:
-        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from daily-reports API
-        - For older dates or if API unavailable: Falls back to BHAVDATA-FULL format
+        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from the
+          historical UDiFF archive, then the daily-reports API
+        - If UDiff is not available (older dates or both UDiff sources fail):
+          Falls back to the old bhavcopy format (cm bhavcopy zip) fetched via
+          the NSE reports API. This format includes the ISIN field.
         
         Note: UDiff format has different column structure than old format.
         Data is returned as-is without modification.
@@ -233,8 +239,16 @@ class NSEArchives:
         if isinstance(dt, datetime):
             dt = dt.date()
         
-        # For recent dates (>= Jul 8, 2024), try UDiff format from daily-reports API
+        # For recent dates (>= Jul 8, 2024), try UDiff format
         if dt >= self.udiff_start_date:
+            # 1) Historical UDiFF archive (covers all UDiFF-era dates)
+            try:
+                text = self.bhavcopy_udiff_raw(dt)
+                if text.splitlines()[0].startswith("TradDt"):
+                    return text
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
+                pass
+            # 2) Daily-reports API (current/previous trading day)
             try:
                 file_content = self.daily_reports.download_file(
                     'CM-UDIFF-BHAVCOPY-CSV',
@@ -247,12 +261,73 @@ class NSEArchives:
                     fname = zf.namelist()[0]
                     with zf.open(fname) as fp_csv:
                         return fp_csv.read().decode('utf-8')
-            except (ValueError, requests.RequestException, zipfile.BadZipFile) as e:
-                # Fall back to BHAVDATA-FULL
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
                 pass
         
-        # Fallback: Use BHAVDATA-FULL (available for all historical dates)
-        return self.full_bhavcopy_raw(dt)
+        # Fallback: Old bhavcopy format (includes ISIN field) via reports API
+        return self.bhavcopy_old_raw(dt)
+    
+    
+    @unzip
+    def bhavcopy_old_raw(self, dt):
+        """Downloads raw bhavcopy text in the old format (includes ISIN field)
+        
+        Fetches the legacy CM bhavcopy zip (cm{dd}{MMM}{yyyy}bhav.csv.zip)
+        through the NSE reports API:
+        https://www.nseindia.com/api/reports?archives=[{"name": "CM - Bhavcopy(csv)",
+        "type": "daily-reports", "category": "capital-market", "section": "equities"}]
+        
+        The file is available for dates before the UDiff switch (Jul 2024);
+        NSE returns 404 for newer dates.
+        
+        Args:
+            dt (date or datetime): Trading date
+            
+        Returns:
+            str: Old-format CSV content with stock market data
+            
+        Raises:
+            requests.RequestException: If the file is unavailable for given date
+        """
+        if isinstance(dt, datetime):
+            dt = dt.date()
+        archives = [{"name": "CM - Bhavcopy(csv)",
+                     "type": "daily-reports",
+                     "category": "capital-market",
+                     "section": "equities"}]
+        params = {
+            "archives": json.dumps(archives),
+            "date": dt.strftime("%d-%b-%Y"),
+            "type": "equities",
+            "mode": "single",
+        }
+        headers = {"referer": "https://www.nseindia.com/all-reports"}
+        r = self.s.get(self.reports_url, params=params,
+                       timeout=self.timeout, headers=headers)
+        if r.status_code == 403 and not self.s.cookies:
+            # www.nseindia.com may require cookies from the landing page first
+            self.s.get("https://www.nseindia.com", timeout=self.timeout)
+            r = self.s.get(self.reports_url, params=params,
+                           timeout=self.timeout, headers=headers)
+        r.raise_for_status()
+        return r.content
+    
+    @unzip
+    def bhavcopy_udiff_raw(self, dt):
+        """Downloads raw UDiFF bhavcopy text for a specific date
+        
+        Fetches the UDiFF archive (34-column format) which NSE serves from
+        Jul 5, 2024 onwards, i.e. for all dates >= udiff_start_date.
+        
+        Args:
+            dt (date or datetime): Trading date
+            
+        Returns:
+            str: UDiFF CSV content with stock market data
+        """
+        ymd = dt.strftime('%Y%m%d')
+        r = self.get("bhavcopy_udiff", ymd=ymd)
+        return r.content
     
     
     def bhavcopy_save(self, dt, dest, skip_if_present=True):
@@ -316,15 +391,73 @@ class NSEArchives:
         with open(fname, 'w') as fp:
             fp.write(text)
 
-    @unzip
     def bhavcopy_fo_raw(self, dt):
-        """Downloads raw bhavcopy text for a specific date"""
+        """Downloads raw derivatives bhavcopy text for a specific date
+
+        Uses hybrid approach:
+        - For dates >= Jul 8, 2024: Attempts to fetch UDiff format from the
+          historical UDiFF archive, then the daily-reports API
+        - For older dates or if both UDiff sources fail: Falls back to legacy
+          DERIVATIVES format
+
+        Note: UDiff format has a different column structure than the legacy format.
+        Data is returned as-is without modification.
+        """
+        if isinstance(dt, datetime):
+            dt = dt.date()
+
+        if dt >= self.udiff_start_date:
+            # 1) Historical UDiFF archive (covers all UDiFF-era dates)
+            try:
+                text = self.bhavcopy_fo_udiff_raw(dt)
+                if text.splitlines()[0].startswith("TradDt"):
+                    return text
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
+                pass
+            # 2) Daily-reports API (current/previous trading day)
+            try:
+                file_content = self.daily_reports.download_file(
+                    'FO-UDIFF-BHAVCOPY-CSV',
+                    trading_date=dt,
+                    segment='FO'
+                )
+                fp = io.BytesIO(file_content)
+                with zipfile.ZipFile(file=fp) as zf:
+                    fname = zf.namelist()[0]
+                    with zf.open(fname) as fp_csv:
+                        return fp_csv.read().decode('utf-8')
+            except (ValueError, requests.RequestException, zipfile.BadZipFile):
+                # Fall back to legacy DERIVATIVES format
+                pass
+
+        return self._bhavcopy_fo_legacy_raw(dt)
+
+    @unzip
+    def bhavcopy_fo_udiff_raw(self, dt):
+        """Downloads raw UDiFF derivatives bhavcopy text for a specific date
+
+        Fetches the permanent historical UDiFF F&O archive which NSE serves
+        from Jul 8, 2024 onwards, i.e. for all dates >= udiff_start_date.
+
+        Args:
+            dt (date or datetime): Trading date
+
+        Returns:
+            str: UDiFF CSV content with derivatives market data
+        """
+        ymd = dt.strftime('%Y%m%d')
+        r = self.get("bhavcopy_fo_udiff", ymd=ymd)
+        return r.content
+
+    @unzip
+    def _bhavcopy_fo_legacy_raw(self, dt):
+        """Downloads raw bhavcopy text from the legacy DERIVATIVES route"""
         dd = dt.strftime('%d')
         MMM = dt.strftime('%b').upper()
         yyyy = dt.year
         r = self.get("bhavcopy_fo", yyyy=yyyy, MMM=MMM, dd=dd)
         return r.content
-    
+
     def bhavcopy_fo_save(self, dt, dest, skip_if_present=True):
         """ Saves Derivatives Bhavcopy to a directory """
         fmt = "fo%d%b%Ybhav.csv"
@@ -485,26 +618,54 @@ full_bhavcopy_raw = a.full_bhavcopy_raw
 full_bhavcopy_save = a.full_bhavcopy_save
 bhavcopy_fo_raw = a.bhavcopy_fo_raw
 bhavcopy_fo_save = a.bhavcopy_fo_save
+bhavcopy_udiff_raw = a.bhavcopy_udiff_raw
+bhavcopy_old_raw = a.bhavcopy_old_raw
 ia = NSEIndicesArchives()
 bhavcopy_index_raw = ia.bhavcopy_index_raw
 bhavcopy_index_save = ia.bhavcopy_index_save
 
+# Maps legacy INSTRUMENT values to their UDiff FinInstrmTp equivalents,
+# so callers can keep using the legacy names regardless of which format
+# bhavcopy_fo_raw() ends up returning for a given date.
+_LEGACY_TO_UDIFF_INSTRUMENT_TYPE = {
+    "FUTIDX": "IDF",
+    "OPTIDX": "IDO",
+    "FUTSTK": "STF",
+    "OPTSTK": "STO",
+}
+
 def expiry_dates(dt, instrument_type="", symbol="", contracts=0):
     txt = bhavcopy_fo_raw(dt)
-    rows = txt.split("\n")
-    rows.pop(0) # Remove headers
-    if len(rows[-1].split(',')) <= 10:
-        rows.pop(-1) # Remove last blank row
-    cells = [row.split(',') for row in rows]
+    rows = [row for row in txt.split("\n") if row.strip()]
+    reader = csv.DictReader(rows)
+
+    if reader.fieldnames and "TckrSymb" in reader.fieldnames:
+        # UDiff format (dates >= NSEArchives.udiff_start_date)
+        instrument_col, symbol_col, expiry_col, contracts_col = (
+            "FinInstrmTp", "TckrSymb", "XpryDt", "TtlTradgVol"
+        )
+        expiry_fmt = "%Y-%m-%d"
+        if instrument_type:
+            instrument_type = _LEGACY_TO_UDIFF_INSTRUMENT_TYPE.get(
+                instrument_type, instrument_type
+            )
+    else:
+        # Legacy format
+        instrument_col, symbol_col, expiry_col, contracts_col = (
+            "INSTRUMENT", "SYMBOL", "EXPIRY_DT", "CONTRACTS"
+        )
+        expiry_fmt = "%d-%b-%Y"
+
+    cells = list(reader)
     if instrument_type:
-        cells = filter(lambda x: x[0]==instrument_type, cells)
+        cells = filter(lambda x: x[instrument_col] == instrument_type, cells)
     if symbol:
-        cells = filter(lambda x: x[1] == symbol, cells)
-    
-    cells = filter(lambda x: int(x[10])>contracts, cells)
-    
-    dts_txt = [row[2] for row in cells]
-    dts = [datetime.strptime(d, "%d-%b-%Y").date() for d in dts_txt]
+        cells = filter(lambda x: x[symbol_col] == symbol, cells)
+
+    cells = filter(lambda x: int(x[contracts_col]) > contracts, cells)
+
+    dts_txt = [row[expiry_col] for row in cells]
+    dts = [datetime.strptime(d, expiry_fmt).date() for d in dts_txt]
     return list(set(dts))
 
 

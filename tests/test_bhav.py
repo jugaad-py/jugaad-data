@@ -1,30 +1,94 @@
-from datetime import date
-from jugaad_data.nse import bhavcopy_raw, full_bhavcopy_raw, bhavcopy_fo_raw, bhavcopy_index_raw, expiry_dates 
+import io
+import json
+import zipfile
+from datetime import date, datetime
+from unittest.mock import MagicMock, patch
+
+from jugaad_data.nse import (bhavcopy_raw, full_bhavcopy_raw, bhavcopy_fo_raw,
+                             bhavcopy_index_raw, expiry_dates,
+                             bhavcopy_old_raw, NSEArchives)
 import pytest
 import requests
 
+# Old cm bhavcopy format (fetched via NSE reports API), includes ISIN field
+OLD_BHAVCOPY_HEADER = ("SYMBOL,SERIES,OPEN,HIGH,LOW,CLOSE,LAST,PREVCLOSE,"
+                       "TOTTRDQTY,TOTTRDVAL,TIMESTAMP,TOTALTRADES,ISIN")
+
+def _old_bhavcopy_text():
+    return (OLD_BHAVCOPY_HEADER + "\n"
+            "SBIN,EQ,355.0,360.0,352.1,358.5,357.0,354.3,100000,35800000.0,"
+            "01-JAN-2020,5000,INE062A01020\n")
+
+def _zip_bytes(text):
+    fp = io.BytesIO()
+    with zipfile.ZipFile(fp, "w") as zf:
+        zf.writestr("cm01JAN2020bhav.csv", text)
+    return fp.getvalue()
+
+@pytest.mark.live
 def test_bhavcopy():
     """Test bhavcopy for a historical date (before UDiff format)
-    
-    For dates before Jul 8, 2024, uses BHAVDATA-FULL format.
-    For recent dates, uses UDiff format with different column structure.
+
+    When UDiff is not available, bhavcopy_raw must fall back to the old
+    bhavcopy format (which has the ISIN field) instead of BHAVDATA-FULL.
     """
     r = bhavcopy_raw(date(2020, 1, 1))
-    # BHAVDATA-FULL format header (used for historical dates)
-    header = "SYMBOL, SERIES, DATE1, PREV_CLOSE, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, LAST_PRICE, CLOSE_PRICE, AVG_PRICE, TTL_TRD_QNTY, TURNOVER_LACS, NO_OF_TRADES, DELIV_QTY, DELIV_PER"
+    header = r.splitlines()[0]
     assert "RELIANCE" in r or "SBIN" in r  # At least some stock data present
-    assert header in r
+    # Old format header with ISIN field
+    assert header.startswith("SYMBOL,SERIES")
+    assert "ISIN" in header
+    # Must NOT be the full bhavcopy (BHAVDATA-FULL) format
+    assert "DELIV_QTY" not in header
 
+@pytest.mark.live
+def test_bhavcopy_old_raw():
+    """Test direct download of the old-format bhavcopy via reports API"""
+    import re
+    isin_re = re.compile(r",IN[A-Z0-9]{10},\s*$")  # 12-char ISIN at row end
+    r = bhavcopy_old_raw(date(2020, 1, 1))
+    header = r.splitlines()[0]
+    assert header.startswith(OLD_BHAVCOPY_HEADER[:15])
+    assert "ISIN" in header
+    assert "RELIANCE" in r or "SBIN" in r
+    # Rows must carry an actual ISIN value e.g. INE062A01020 for SBIN
+    assert any(isin_re.search(line) for line in r.splitlines()[1:])
+
+@pytest.mark.live
+def test_bhavcopy_old_raw_not_available_for_udiff_dates():
+    """Old-format file returns 404 for dates after the UDiff switch"""
+    nse = NSEArchives()
+    with pytest.raises(requests.RequestException):
+        nse.bhavcopy_old_raw(date(2024, 7, 10))
+
+@pytest.mark.live
 def test_bhavcopy_recent():
     """Test bhavcopy for recent date using UDiff format
     
-    For dates >= Jul 8, 2024, should use UDiff format from daily-reports API.
+    For dates >= Jul 8, 2024, should use UDiff format.
     UDiff format has different columns: TradDt,BizDt,Sgmt,Src,FinInstrmTp,...
     Uses a fixed past trading date so the response is cached and reliable.
     """
     r = bhavcopy_raw(date(2024, 7, 10))
     assert len(r) > 0
-    assert "ISIN" in r
+    header = r.splitlines()[0]
+    assert header.startswith("TradDt")
+    assert "ISIN" in header
+
+
+@pytest.mark.live
+def test_bhavcopy_historical_udiff():
+    """Test bhavcopy for a historical UDiFF-era date
+
+    The daily-reports API only serves current/previous trading day, so older
+    UDiFF dates must come from the historical UDiFF archive. Regression test
+    for bhavcopy_raw silently returning legacy format for dates >= Jul 8, 2024.
+    """
+    r = bhavcopy_raw(date(2025, 7, 21))
+    header = r.splitlines()[0]
+    assert header.startswith("TradDt")
+    assert "ISIN" in header
+    assert not header.startswith("SYMBOL, SERIES")
 
 # def test_full_bhavcopy():
 #     r = full_bhavcopy_raw(date(2020,1,1))
@@ -36,6 +100,22 @@ def test_bhavcopy_recent():
 #         r = full_bhavcopy_raw(date(2019,1,1))
 #     assert '2019' in e.value.args[0]    
 
+@pytest.mark.live
+def test_bhavcopy_fo_recent():
+    """Test derivatives bhavcopy for recent date using UDiff format
+
+    For dates >= Jul 8, 2024, should use UDiff format from daily-reports API.
+    UDiff format has different columns: TradDt,BizDt,Sgmt,Src,FinInstrmTp,...
+    """
+    today = date.today()
+    try:
+        r = bhavcopy_fo_raw(today)
+        assert len(r) > 0
+        assert "TckrSymb" in r
+    except (requests.RequestException, zipfile.BadZipFile):
+        pytest.skip("No data available for today")
+
+@pytest.mark.live
 def test_bhavcopy_fo():
     r = bhavcopy_fo_raw(date(2020,1,1))
     header = "INSTRUMENT,SYMBOL,EXPIRY_DT,STRIKE_PR,OPTION_TYP,OPEN,HIGH,LOW,CLOSE,SETTLE_PR,CONTRACTS,VAL_INLAKH,OPEN_INT,CHG_IN_O"
@@ -48,6 +128,20 @@ def test_bhavcopy_fo():
 #     assert "NIFTY" in r
 #     assert header in r
 
+@pytest.mark.live
+def test_expiry_dates_recent():
+    """expiry_dates() should work against recent UDiff-format bhavcopy data too,
+    using the same legacy instrument_type names (FUTIDX, OPTIDX, FUTSTK, OPTSTK).
+    """
+    today = date.today()
+    try:
+        dts = expiry_dates(today, "FUTIDX", "NIFTY")
+        assert len(dts) > 0
+        assert all(isinstance(d, date) for d in dts)
+    except (requests.RequestException, zipfile.BadZipFile, ValueError):
+        pytest.skip("No data available for today")
+
+@pytest.mark.live
 def test_expiry_dates():
     dt = date(2020, 9, 28)
     dts = expiry_dates(dt)
@@ -65,6 +159,7 @@ def test_expiry_dates():
     assert date(2020, 11, 26) in dts
 
 
+@pytest.mark.live
 def test_list_available_reports():
     """Test listing available reports from daily-reports API"""
     from jugaad_data.nse import NSEArchives
@@ -79,6 +174,7 @@ def test_list_available_reports():
         pytest.skip("API not available")
 
 
+@pytest.mark.live
 def test_download_report(tmp_path):
     """Test downloading a report via download_report method"""
     from jugaad_data.nse import NSEArchives
@@ -98,7 +194,151 @@ def test_download_report(tmp_path):
     except requests.RequestException:
         pytest.skip("API not available")
 
+# ---------------------------------------------------------------------------
+# Offline (mocked) tests - run in CI without network access
+# ---------------------------------------------------------------------------
+
+def test_bhavcopy_raw_falls_back_to_old_format_when_udiff_unavailable():
+    """When both UDiff sources fail, fall back to old format (with ISIN),
+    not to the full bhavcopy (BHAVDATA-FULL) format."""
+    n = NSEArchives()
+    with patch.object(n, "bhavcopy_udiff_raw",
+                      side_effect=zipfile.BadZipFile("not available")), \
+         patch.object(n.daily_reports, "download_file",
+                      side_effect=ValueError("not found")), \
+         patch.object(n, "bhavcopy_old_raw",
+                      return_value=_old_bhavcopy_text()) as m_old, \
+         patch.object(n, "full_bhavcopy_raw") as m_full:
+        out = n.bhavcopy_raw(date(2024, 7, 10))
+    assert out == _old_bhavcopy_text()
+    m_old.assert_called_once_with(date(2024, 7, 10))
+    m_full.assert_not_called()
+
+def test_bhavcopy_raw_skips_udiff_for_pre_udiff_dates():
+    """Pre-UDiff dates must go straight to the old-format fallback"""
+    n = NSEArchives()
+    m_udiff = MagicMock()
+    with patch.object(n, "bhavcopy_udiff_raw", m_udiff), \
+         patch.object(n, "bhavcopy_old_raw",
+                      return_value=_old_bhavcopy_text()) as m_old:
+        out = n.bhavcopy_raw(date(2020, 1, 1))
+    assert m_udiff.call_count == 0
+    m_old.assert_called_once_with(date(2020, 1, 1))
+    assert "ISIN" in out.splitlines()[0]
+
+def test_bhavcopy_old_raw_request_and_unzip():
+    """bhavcopy_old_raw must hit the NSE reports API with correct params
+    and return the unzipped old-format CSV text"""
+    n = NSEArchives()
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.content = _zip_bytes(_old_bhavcopy_text())
+    with patch.object(n.s, "get", return_value=resp) as m_get:
+        text = n.bhavcopy_old_raw(datetime(2020, 1, 1))
+    url = m_get.call_args[0][0]
+    params = m_get.call_args[1]["params"]
+    assert url == "https://www.nseindia.com/api/reports"
+    archives = json.loads(params["archives"])
+    assert archives[0] == {"name": "CM - Bhavcopy(csv)",
+                           "type": "daily-reports",
+                           "category": "capital-market",
+                           "section": "equities"}
+    assert params["date"] == "01-Jan-2020"
+    assert params["type"] == "equities"
+    assert params["mode"] == "single"
+    assert text.splitlines()[0].startswith(OLD_BHAVCOPY_HEADER[:15])
+    assert "INE062A01020" in text
+
+def test_bhavcopy_old_raw_raises_when_file_missing():
+    """NSE returns 404 when the old-format file does not exist for a date"""
+    n = NSEArchives()
+    resp = MagicMock()
+    resp.status_code = 404
+    resp.raise_for_status.side_effect = requests.exceptions.HTTPError("404")
+    with patch.object(n.s, "get", return_value=resp):
+        with pytest.raises(requests.exceptions.HTTPError):
+            n.bhavcopy_old_raw(date(2024, 7, 10))
+
+def _fo_udiff_zip_bytes(text):
+    fp = io.BytesIO()
+    with zipfile.ZipFile(fp, "w") as zf:
+        zf.writestr("BhavCopy_NSE_FO_0_0_0_20240710_F_0000.csv", text)
+    return fp.getvalue()
+
+def test_bhavcopy_fo_raw_uses_historical_udiff_archive_when_available():
+    """For dates >= udiff_start_date, bhavcopy_fo_raw must prefer the
+    permanent historical UDiFF F&O archive over the daily-reports API and
+    the legacy route."""
+    n = NSEArchives()
+    udiff_text = "TradDt,BizDt,Sgmt,Src,FinInstrmTp,TckrSymb,XpryDt\n2024-07-10,..."
+    with patch.object(n, "bhavcopy_fo_udiff_raw",
+                      return_value=udiff_text) as m_archive, \
+         patch.object(n.daily_reports, "download_file") as m_dl, \
+         patch.object(n, "_bhavcopy_fo_legacy_raw") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2024, 7, 10))
+    assert out == udiff_text
+    m_archive.assert_called_once_with(date(2024, 7, 10))
+    m_dl.assert_not_called()
+    m_legacy.assert_not_called()
+
+def test_bhavcopy_fo_raw_uses_daily_reports_when_archive_unavailable():
+    """When the historical UDiFF archive is unavailable, fall back to the
+    FO-UDIFF-BHAVCOPY-CSV daily-reports file instead of the legacy route."""
+    n = NSEArchives()
+    udiff_text = "TradDt,BizDt,Sgmt,Src,FinInstrmTp,TckrSymb,XpryDt\n2024-07-10,..."
+    with patch.object(n, "bhavcopy_fo_udiff_raw",
+                      side_effect=requests.exceptions.RequestException("boom")), \
+         patch.object(n.daily_reports, "download_file",
+                      return_value=_fo_udiff_zip_bytes(udiff_text)) as m_dl, \
+         patch.object(n, "_bhavcopy_fo_legacy_raw") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2024, 7, 10))
+    assert out == udiff_text
+    m_dl.assert_called_once_with(
+        'FO-UDIFF-BHAVCOPY-CSV', trading_date=date(2024, 7, 10), segment='FO'
+    )
+    m_legacy.assert_not_called()
+
+def test_bhavcopy_fo_raw_falls_back_to_legacy_when_udiff_unavailable():
+    """When neither UDIFF source is available, fall back to the legacy
+    DERIVATIVES route."""
+    n = NSEArchives()
+    with patch.object(n, "bhavcopy_fo_udiff_raw",
+                      side_effect=requests.exceptions.RequestException("boom")), \
+         patch.object(n.daily_reports, "download_file",
+                      side_effect=ValueError("not found")), \
+         patch.object(n, "_bhavcopy_fo_legacy_raw",
+                      return_value="INSTRUMENT,SYMBOL,...") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2024, 7, 10))
+    assert out == "INSTRUMENT,SYMBOL,..."
+    m_legacy.assert_called_once_with(date(2024, 7, 10))
+
+def test_bhavcopy_fo_raw_skips_udiff_for_pre_udiff_dates():
+    """Pre-UDiff dates must go straight to the legacy fallback"""
+    n = NSEArchives()
+    m_dl = MagicMock()
+    with patch.object(n, "bhavcopy_fo_udiff_raw") as m_archive, \
+         patch.object(n.daily_reports, "download_file", m_dl), \
+         patch.object(n, "_bhavcopy_fo_legacy_raw",
+                      return_value="INSTRUMENT,SYMBOL,...") as m_legacy:
+        out = n.bhavcopy_fo_raw(date(2020, 1, 1))
+    assert m_archive.call_count == 0
+    assert m_dl.call_count == 0
+    m_legacy.assert_called_once_with(date(2020, 1, 1))
+
+def test_expiry_dates_parses_udiff_format():
+    """expiry_dates() must correctly parse UDiff-format FO bhavcopy rows,
+    translating legacy instrument_type names to their UDiff equivalents."""
+    udiff_text = (
+        "TradDt,FinInstrmTp,TckrSymb,XpryDt,TtlTradgVol\n"
+        "2024-07-10,IDF,NIFTY,2024-07-25,15000\n"
+        "2024-07-10,IDO,NIFTY,2024-07-25,5\n"
+    )
+    with patch("jugaad_data.nse.archives.bhavcopy_fo_raw", return_value=udiff_text):
+        dts = expiry_dates(date(2024, 7, 10), "FUTIDX", "NIFTY")
+    assert dts == [date(2024, 7, 25)]
+
 """
+@pytest.mark.live
 def test_bhavcopy_on_holiday():
     r = bhavcopy_raw(date(2020,1,5))
     header = "SYMBOL,SERIES,OPEN,HIGH,LOW,CLOSE,LAST,PREVCLOSE,TOTTRDQTY,TOTTRDVAL,TIMESTAMP,TOTALTRADES,ISIN"
