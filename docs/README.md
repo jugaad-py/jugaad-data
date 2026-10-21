@@ -48,6 +48,7 @@ Complete documentation for the `jugaad-data` Python library for downloading hist
 - Option chains (indices, equities, currencies)
 - Derivative contracts
 - Corporate announcements
+- Integrated filings (financial results, governance)
 
 ✅ **RBI Economic Data**
 - Policy rates (repo, MSF, bank rate)
@@ -123,6 +124,7 @@ Real-time data from National Stock Exchange:
 - Option chains
 - Derivatives data
 - Corporate announcements
+- Integrated filings (financial results, governance)
 - Tick data and order book
 
 **Key Methods:**

@@ -271,12 +271,62 @@ Get corporate integrated filing results (financial results, annual reports, etc.
 - `index` (str, optional): Market segment - `'equities'`, `'sme'`, etc.
 - `symbol` (str, optional): Stock symbol e.g. `'DIXON'`
 - `issuer` (str, optional): Full company name e.g. `'Dixon Technologies (India) Limited'`
-- `period_ended` (str, optional): Period filter e.g. `'all'`
+- `period_ended` (date or str, optional): Quarter-end filter — a `datetime.date`, a `'DD-Mon-YYYY'` string e.g. `'30-Sep-2026'`, or `'all'`
 - `from_date` (date, optional): Start date filter (requires `to_date`)
 - `to_date` (date, optional): End date filter (requires `from_date`)
-- `filing_type` (str): Type of filing (default: `'Integrated Filing- Financials'`)
+- `filing_type` (str): Type of filing (default: `'Integrated Filing- Financials'`; also `'Integrated Filing- Governance'`)
 - `page` (int): Page number for pagination (default: 1)
 - `size` (int): Results per page (default: 20)
+
+**Returns:** `{'data': [...], 'size': int, 'page': int, 'totalCount': int}` (`page` in the response is 0-based)
+
+#### `integrated_filing_financials(index="equities", period_ended=None, symbol=None, issuer=None, from_date=None, to_date=None, page=1, size=20)`
+Get Integrated Filing - Financials (quarterly financial results). Shortcut for `corporate_integrated_filing(filing_type="Integrated Filing- Financials")`.
+
+**Parameters:**
+- `index` (str): `'equities'` or `'sme'` (default: `'equities'`)
+- `period_ended` (date or str, optional): Quarter end, e.g. `date(2026, 9, 30)` or `'30-Sep-2026'`
+- `symbol`, `issuer`, `from_date`, `to_date`, `page`, `size`: as in `corporate_integrated_filing`
+
+**Example:**
+```python
+from datetime import date
+from jugaad_data.nse import NSELive
+n = NSELive()
+r = n.integrated_filing_financials(index="equities", period_ended=date(2026, 9, 30))
+r['totalCount']        # 263
+r['data'][0]['symbol'] # 'VARMORA'
+r['data'][0]['xbrl']   # link to XBRL file
+```
+
+**Record format:**
+```python
+{
+    'symbol': 'VARMORA',
+    'cmName': 'Varmora Granito Limited',   # Company name
+    'type': 'Integrated Filing- Financials',
+    'type_Sub': 'Original',                # Original / Revised
+    'qe_Date': '30-SEP-2026',              # Quarter end
+    'audited': 'Un-Audited',
+    'consolidated': 'Consolidated',        # Consolidated / Standalone
+    'broadcast_Date': '20-Oct-2026 01:54:12',
+    'revised_Date': None,
+    'revision_Remark': None,
+    'seq_Id': '202495',
+    'xbrl': 'https://nsearchives.nseindia.com/corporate/xbrl/...xml',
+    'ixbrl': 'https://nsearchives.nseindia.com/corporate/ixbrl/...html',
+    'pdf_attach': '...',
+    'xbrlFileSize': '61.85 KB',
+    'ixbrlFileSize': '81.42 KB',
+}
+```
+
+#### `integrated_filing_governance(index=None, period_ended=None, symbol=None, issuer=None, from_date=None, to_date=None, page=1, size=20)`
+Get Integrated Filing - Governance filings. Rarely used. Shortcut for `corporate_integrated_filing(filing_type="Integrated Filing- Governance")`.
+
+**Parameters:** same as `integrated_filing_financials`, except `index` defaults to `None` (NSE currently appears to ignore it for governance filings).
+
+**Returns:** same structure as `integrated_filing_financials`; `audited` and `consolidated` are `None`, `type_Sub` is e.g. `'New'`.
 
 ---
 

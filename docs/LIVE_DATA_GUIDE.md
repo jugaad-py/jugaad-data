@@ -12,6 +12,8 @@ A comprehensive guide to fetching real-time market data using `jugaad-data`.
 6. [Live Option Chains](#live-option-chains)
 7. [Corporate Announcements](#corporate-announcements)
 8. [Corporate Integrated Filing](#corporate-integrated-filing)
+   - [Financial Results](#financial-results)
+   - [Governance](#governance)
 9. [Best Practices](#best-practices)
 
 ---
@@ -664,7 +666,7 @@ filings = n.corporate_integrated_filing(index="equities", page=2, size=50)
 | `index`       | str (optional) | None                               | Market segment: `'equities'`, `'sme'`, etc.   |
 | `symbol`      | str (optional) | None                               | Stock symbol e.g. `'DIXON'`                   |
 | `issuer`      | str (optional) | None                               | Full company name                             |
-| `period_ended`| str (optional) | None                               | Period filter e.g. `'all'`                    |
+| `period_ended`| date/str (opt.)| None                               | Quarter end: `date`, `'30-Sep-2026'` or `'all'` |
 | `from_date`   | date (optional)| None                               | Start date (requires `to_date`)               |
 | `to_date`     | date (optional)| None                               | End date (requires `from_date`)               |
 | `filing_type` | str            | `'Integrated Filing- Financials'`  | Type of filing                                |
@@ -672,6 +674,66 @@ filings = n.corporate_integrated_filing(index="equities", page=2, size=50)
 | `size`        | int            | 20                                 | Results per page                              |
 
 > **Note:** `from_date` and `to_date` must be provided together. Providing only one raises an exception.
+
+### Financial Results
+
+`integrated_filing_financials()` is a shortcut for the `'Integrated Filing- Financials'` type, i.e. quarterly financial results.
+
+```python
+from datetime import date
+from jugaad_data.nse import NSELive
+n = NSELive()
+
+# All mainboard results for the Sep-2026 quarter
+r = n.integrated_filing_financials(index="equities", period_ended=date(2026, 9, 30))
+# A string works too
+r = n.integrated_filing_financials(index="equities", period_ended="30-Sep-2026")
+
+# SME results
+r = n.integrated_filing_financials(index="sme", period_ended=date(2026, 9, 30))
+
+print(r['totalCount'])
+for rec in r['data']:
+    print(rec['symbol'], rec['consolidated'], rec['audited'], rec['xbrl'])
+```
+
+Parameters: `index` (`'equities'` default, or `'sme'`), `period_ended`, `symbol`, `issuer`, `from_date`, `to_date`, `page`, `size`, which work the same as in the table above.
+
+Sample response:
+
+```python
+{
+    'data': [{
+        'symbol': 'VARMORA',
+        'cmName': 'Varmora Granito Limited',
+        'type': 'Integrated Filing- Financials',
+        'type_Sub': 'Original',
+        'qe_Date': '30-SEP-2026',
+        'audited': 'Un-Audited',
+        'consolidated': 'Consolidated',
+        'broadcast_Date': '20-Oct-2026 01:54:12',
+        'xbrl': 'https://nsearchives.nseindia.com/corporate/xbrl/...xml',
+        'ixbrl': 'https://nsearchives.nseindia.com/corporate/ixbrl/...html',
+        ...
+    }, ...],
+    'size': 20,
+    'page': 0,          # 0-based in the response, even though you request page=1
+    'totalCount': 263
+}
+```
+
+Companies usually file Standalone and Consolidated results as separate records.
+
+### Governance
+
+`integrated_filing_governance()` returns `'Integrated Filing- Governance'` filings. It's rarely needed, but available. It takes the same parameters, but `index` defaults to `None`, since NSE currently appears to ignore it for this type.
+
+```python
+r = n.integrated_filing_governance()
+r = n.integrated_filing_governance(symbol="DIXON", period_ended="30-Sep-2026")
+```
+
+The records have the same fields as financial results, but `audited` and `consolidated` are `None`.
 
 ---
 

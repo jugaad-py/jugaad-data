@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.0] - 2026-10-22
+
+### Added
+- `NSELive.integrated_filing_financials()` — quarterly financial results (Integrated Filing- Financials) for `equities` or `sme`, filterable by `period_ended` quarter end
+- `NSELive.integrated_filing_governance()` — Integrated Filing- Governance filings
+
+### Changed
+- `NSELive.corporate_integrated_filing()` — `period_ended` now also accepts a `datetime.date` (sent as `DD-Mon-YYYY`, e.g. `30-Sep-2026`)
+
 ## [0.35.10] - 2026-10-06
 
 ### Added

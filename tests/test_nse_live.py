@@ -155,6 +155,38 @@ def test_corporate_integrated_filing():
         n.corporate_integrated_filing(from_date=date(2026, 1, 1))
 
 @pytest.mark.live
+def test_integrated_filing_financials():
+    # period_ended as date
+    d = n.integrated_filing_financials(period_ended=date(2026, 9, 30), size=5)
+    assert isinstance(d['data'], list)
+    assert 'totalCount' in d
+    assert len(d['data']) > 0
+    for rec in d['data']:
+        assert rec['type'] == "Integrated Filing- Financials"
+        assert rec['qe_Date'] == "30-SEP-2026"
+
+    # period_ended as string gives the same result set
+    d2 = n.integrated_filing_financials(period_ended="30-Sep-2026", size=5)
+    assert d2['totalCount'] == d['totalCount']
+
+    # SME segment
+    d = n.integrated_filing_financials(index="sme", period_ended=date(2026, 9, 30), size=5)
+    assert isinstance(d['data'], list)
+    for rec in d['data']:
+        assert rec['type'] == "Integrated Filing- Financials"
+
+    with pytest.raises(Exception):
+        n.integrated_filing_financials(to_date=date(2026, 1, 1))
+
+@pytest.mark.live
+def test_integrated_filing_governance():
+    d = n.integrated_filing_governance(size=5)
+    assert isinstance(d['data'], list)
+    assert len(d['data']) > 0
+    for rec in d['data']:
+        assert rec['type'] == "Integrated Filing- Governance"
+
+@pytest.mark.live
 def test_corporate_announcements():
     d = n.corporate_announcements()
     assert type(d) == list
