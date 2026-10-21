@@ -254,12 +254,17 @@ class NSELive:
             index:       Market segment - 'equities', 'sme', etc. (optional)
             symbol:      Stock symbol e.g. 'DIXON' (optional)
             issuer:      Full company name e.g. 'Dixon Technologies (India) Limited' (optional)
-            period_ended: Period filter e.g. 'all' or a specific period string (optional)
+            period_ended: Quarter-end filter - datetime.date, a 'DD-Mon-YYYY' string
+                         e.g. '30-Sep-2026', or 'all' (optional)
             from_date:   datetime.date - start date filter (optional, requires to_date)
             to_date:     datetime.date - end date filter (optional, requires from_date)
             filing_type: Type of filing (default: 'Integrated Filing- Financials')
             page:        Page number for pagination (default: 1)
             size:        Number of results per page (default: 20)
+
+        Returns:
+            Dict with keys: data (list of filing records), size, page (0-based),
+                            totalCount
         """
         payload = {"type": filing_type, "page": page, "size": size}
 
@@ -270,6 +275,8 @@ class NSELive:
         if issuer:
             payload["issuer"] = issuer
         if period_ended:
+            if hasattr(period_ended, "strftime"):
+                period_ended = period_ended.strftime("%d-%b-%Y")
             payload["period_ended"] = period_ended
         if from_date and to_date:
             payload["from_date"] = from_date.strftime("%d-%m-%Y")
@@ -278,6 +285,65 @@ class NSELive:
             raise Exception("Please provide both from_date and to_date")
 
         return self.get("integrated_filing", payload)
+
+    def integrated_filing_financials(self, index="equities", period_ended=None, symbol=None,
+                                     issuer=None, from_date=None, to_date=None,
+                                     page=1, size=20):
+        """
+        Returns Integrated Filing - Financials (quarterly financial results) from NSE.
+        (https://www.nseindia.com/companies-listing/corporate-integrated-filing)
+
+        Args:
+            index:        Market segment - 'equities' or 'sme' (default: 'equities')
+            period_ended: Quarter-end filter - datetime.date, a 'DD-Mon-YYYY' string
+                          e.g. '30-Sep-2026', or 'all' (optional)
+            symbol:       Stock symbol e.g. 'DIXON' (optional)
+            issuer:       Full company name (optional)
+            from_date:    datetime.date - start date filter (optional, requires to_date)
+            to_date:      datetime.date - end date filter (optional, requires from_date)
+            page:         Page number for pagination (default: 1)
+            size:         Number of results per page (default: 20)
+
+        Returns:
+            Dict with keys: data, size, page (0-based), totalCount.
+            Each record in data has keys: symbol, cmName, type, type_Sub, qe_Date,
+            audited, consolidated, broadcast_Date, revised_Date, xbrl, ixbrl, etc.
+        """
+        return self.corporate_integrated_filing(index=index, symbol=symbol, issuer=issuer,
+                                                period_ended=period_ended,
+                                                from_date=from_date, to_date=to_date,
+                                                filing_type="Integrated Filing- Financials",
+                                                page=page, size=size)
+
+    def integrated_filing_governance(self, index=None, period_ended=None, symbol=None,
+                                     issuer=None, from_date=None, to_date=None,
+                                     page=1, size=20):
+        """
+        Returns Integrated Filing - Governance filings from NSE.
+        (https://www.nseindia.com/companies-listing/corporate-integrated-filing)
+
+        Args:
+            index:        Market segment - 'equities' or 'sme' (optional; NSE currently
+                          appears to ignore it for governance filings)
+            period_ended: Quarter-end filter - datetime.date, a 'DD-Mon-YYYY' string
+                          e.g. '30-Sep-2026', or 'all' (optional)
+            symbol:       Stock symbol e.g. 'DIXON' (optional)
+            issuer:       Full company name (optional)
+            from_date:    datetime.date - start date filter (optional, requires to_date)
+            to_date:      datetime.date - end date filter (optional, requires from_date)
+            page:         Page number for pagination (default: 1)
+            size:         Number of results per page (default: 20)
+
+        Returns:
+            Dict with keys: data, size, page (0-based), totalCount.
+            Records have the same keys as integrated_filing_financials, with
+            audited and consolidated set to None.
+        """
+        return self.corporate_integrated_filing(index=index, symbol=symbol, issuer=issuer,
+                                                period_ended=period_ended,
+                                                from_date=from_date, to_date=to_date,
+                                                filing_type="Integrated Filing- Governance",
+                                                page=page, size=size)
 
     @live_cache
     def symbol_meta(self, symbol):
