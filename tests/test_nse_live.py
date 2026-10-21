@@ -205,3 +205,21 @@ def test_corporate_announcements():
     d = n.corporate_announcements(from_date=from_date, to_date=to_date, symbol='NESCO')
     
     assert d[0]['symbol'] == 'NESCO'
+
+
+@pytest.mark.live
+def test_corporate_actions():
+    d = n.corporate_actions()
+    assert type(d) == list
+
+    d = n.corporate_actions(from_date=date(2024,1,1), to_date=date(2024,1,31))
+    assert len(d) > 0
+    for key in ('symbol', 'isin', 'series', 'comp', 'faceVal', 'subject', 'exDate'):
+        assert key in d[0].keys()
+
+    d = n.corporate_actions(symbol='RELIANCE', from_date=date(2017,1,1), to_date=date(2020,12,31))
+    assert all(x['symbol'] == 'RELIANCE' for x in d)
+    assert any(x['exDate'] == '07-Sep-2017' and 'Bonus' in x['subject'] for x in d)
+
+    with pytest.raises(Exception):
+        n.corporate_actions(from_date=date(2024,1,1))

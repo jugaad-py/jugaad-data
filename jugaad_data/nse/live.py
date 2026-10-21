@@ -26,6 +26,7 @@ class NSELive:
             "pre_open_market": "/market-data-pre-open",
             "holiday_list": "/holiday-master?type=trading",
             "corporate_announcements": "/corporate-announcements",
+            "corporate_actions": "/corporates-corporateActions",
             "integrated_filing": "/integrated-filing-results"
     }
     
@@ -469,3 +470,41 @@ class NSELive:
             payload['symbol'] = symbol
         return self.get("corporate_announcements", payload)
 
+    def corporate_actions(self, segment="equities", from_date=None, to_date=None, symbol=None):
+        """Corporate actions by ex-date
+        (https://www.nseindia.com/companies-listing/corporate-filings-actions)
+        Returns the raw NSE records (list of dicts) unchanged. The free-text
+        `subject` is not parsed, e.g. "Bonus 1:1", "Rights 1:15 @ Premium Rs 1247",
+        "Face Value Split (Sub-Division) - From Rs10/- Per Share To Rs 5/- Per Share".
+
+        Fields: symbol, isin, series, comp (company name), faceVal, subject,
+        exDate (DD-Mon-YYYY, "-" if none), recDate, bcStartDate, bcEndDate,
+        ndStartDate, ndEndDate, caBroadcastDate, ind. Missing values are "-"
+        or None.
+
+        Behaviour observed against live NSE:
+        - segment: "equities" (includes govt securities, series GS), "sme" and
+          "mf" return records. "debt" (and unknown values) return
+          {"data": [], "msg": "no data found"} (a dict, not a list).
+          For "sme" and "mf" the isin field may not be a real ISIN.
+        - A full-year range returns thousands of records in one call
+          (equities 2024: ~2,700).
+        - from_date/to_date filter on ex-date.
+        - symbol with a date range filters inside that range (RELIANCE
+          2017-2020: dividends, Bonus 1:1 on 07-Sep-2017, Rights 1:15 on
+          13-May-2020; no split in that window).
+        - No dates: without symbol only a short upcoming window is returned
+          (a few records around today). With symbol alone the company's
+          full history is returned (RELIANCE: 2011 to the next upcoming
+          dividend).
+        """
+        payload = {"index": segment}
+
+        if from_date and to_date:
+            payload['from_date'] = from_date.strftime("%d-%m-%Y")
+            payload['to_date']   = to_date.strftime("%d-%m-%Y")
+        elif from_date or to_date:
+            raise Exception("Please provide both from_date and to_date")
+        if symbol:
+            payload['symbol'] = symbol
+        return self.get("corporate_actions", payload)

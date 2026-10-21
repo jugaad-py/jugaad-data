@@ -241,6 +241,25 @@ list  # List of datetime.date objects for contract expiries
 
 ### Corporate Announcements
 
+#### `corporate_actions(segment="equities", from_date=None, to_date=None, symbol=None)`
+Get corporate actions (dividend, bonus, split, rights, etc.) by ex-date. Records are returned raw; `subject` is free text.
+
+**Parameters:**
+- `segment` (str, optional): `"equities"`, `"sme"` or `"mf"` (`"debt"` returns `{"data": [], "msg": "no data found"}`)
+- `from_date`, `to_date` (date, optional): Ex-date range; provide both or neither
+- `symbol` (str, optional): Stock symbol filter. With no dates, returns the symbol's full history
+
+**Returns:**
+```python
+[{
+    'symbol': 'RELIANCE', 'isin': 'INE002A01018', 'series': 'EQ',
+    'comp': 'Reliance Industries Limited', 'faceVal': '10',
+    'subject': 'Bonus 1:1', 'exDate': '07-Sep-2017', 'recDate': '08-Sep-2017',
+    'bcStartDate': '-', 'bcEndDate': '-', 'ndStartDate': '-', 'ndEndDate': '-',
+    'caBroadcastDate': None, 'ind': '-'
+}]
+```
+
 #### `corporate_announcements(symbol=None, from_date=None, to_date=None)`
 Get corporate announcements/disclosures.
 

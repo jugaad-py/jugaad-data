@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `NSELive.corporate_actions()` — corporate actions (dividends, bonus, splits, rights, etc.) by ex-date for `equities`, `sme` or `mf`; raw NSE records, optional `symbol` and date range
+
 ## [0.36.0] - 2026-10-22
 
 ### Added
