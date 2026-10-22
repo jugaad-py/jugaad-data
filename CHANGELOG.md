@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.37.0] - 2026-10-22
 
 ### Changed
 - **Breaking:** `RBI.current_rates()` now returns structured JSON-style data instead of display strings. Percentages are fractions (`5.5%` -> `0.055`), ranges are `{"min", "max"}`, values RBI shows as `-` are `None`. Keys are snake_case (`policy_repo_rate`, `crr`, ...); FX, G-Secs and T-bills are lists (`fx`, `gsec`, `tbill`); index levels are under `indices`.
