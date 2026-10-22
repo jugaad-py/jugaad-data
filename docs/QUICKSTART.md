@@ -179,14 +179,14 @@ print(current_rates)
 ```
 
 Output includes:
-- Policy Repo Rate
-- Reverse Repo Rate
-- Bank Rate
+- Policy Repo Rate, SDF, MSF, Bank Rate, Fixed Reverse Repo Rate
 - CRR, SLR
-- Base Rate, MCLR
-- T-Bill rates
-- Government Securities rates
+- Base Rate, MCLR, deposit rates, call rate
+- FX reference rates
+- Government Securities yields and T-bill yields (`None` when RBI shows no value)
 - Index values (Sensex, Nifty 50)
+
+Percentages are fractions (`0.055` is 5.5%) and ranges are `{"min": ..., "max": ...}`. See the [RBI guide](RBI_GUIDE.md).
 
 ### Download NSE Daily Reports (39+ Report Types)
 

@@ -7,8 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Breaking:** `RBI.current_rates()` now returns structured JSON-style data instead of display strings. Percentages are fractions (`5.5%` -> `0.055`), ranges are `{"min", "max"}`, values RBI shows as `-` are `None`. Keys are snake_case (`policy_repo_rate`, `crr`, ...); FX, G-Secs and T-bills are lists (`fx`, `gsec`, `tbill`); index levels are under `indices`.
+
 ### Added
 - `NSELive.corporate_actions()` — corporate actions (dividends, bonus, splits, rights, etc.) by ex-date for `equities`, `sme` or `mf`; raw NSE records, optional `symbol` and date range
+- `RBI.tbill_rate(days)` and `jugaad_data.rbi.RateNotAvailable` — raises when RBI shows no T-bill cut-off
+
+### Fixed
+- `current_rates()` no longer returns `'-%'` for T-bills without a recent auction
+- "Standing Deposit Facility Rate" was mapped onto the `Savings Deposit Rate` key
 
 ## [0.36.0] - 2026-10-22
 

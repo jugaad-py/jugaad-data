@@ -548,30 +548,32 @@ r = RBI()
 ### Methods
 
 #### `current_rates()`
-Get current economic rates and indices from RBI.
+Get current rates from the RBI home page. Percentages are fractions (`5.5%` -> `0.055`), ranges are `{"min", "max"}` dicts, and values RBI shows as `-` are `None`.
 
 **Returns:**
 ```python
 {
-    'Policy Repo Rate': str,          # e.g., "4.00%"
-    'Reverse Repo Rate': str,
-    'Marginal Standing Facility Rate': str,
-    'Bank Rate': str,
-    'CRR': str,                       # Cash Reserve Ratio
-    'SLR': str,                       # Statutory Liquidity Ratio
-    'Base Rate': str,
-    'MCLR (Overnight)': str,
-    'Savings Deposit Rate': str,
-    'Term Deposit Rate > 1 Year': str,
-    'Call Rates': str,
-    '91 day T-bills': str,            # Treasury bills
-    '182 day T-bills': str,
-    '364 day T-bills': str,
-    'Government Securities': dict,     # GS rates by maturity
-    'S&P BSE Sensex': str,
-    'Nifty 50': str
+    'policy_repo_rate': float,
+    'standing_deposit_facility_rate': float,
+    'marginal_standing_facility_rate': float,
+    'bank_rate': float,
+    'fixed_reverse_repo_rate': float,
+    'crr': float,
+    'slr': float,
+    'base_rate': {'min': float, 'max': float},
+    'mclr_overnight': {'min': float, 'max': float},
+    'savings_deposit_rate': float,
+    'term_deposit_rate_gt_1y': {'min': float, 'max': float},
+    'call_rate': {'min': float, 'max': float},
+    'fx': [{'currency': str, 'units': int, 'inr': float}],           # INR per `units` of currency
+    'gsec': [{'coupon': float, 'maturity_year': int, 'yield': float | None}],
+    'tbill': [{'days': int, 'yield': float | None}],                  # 91, 182, 364
+    'indices': {'sensex': float, 'nifty_50': float}
 }
 ```
+
+#### `tbill_rate(days)`
+Cut-off yield (fraction) of the 91, 182 or 364 day T-bill. Raises `jugaad_data.rbi.RateNotAvailable` when RBI shows no value.
 
 ---
 
