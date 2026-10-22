@@ -19,11 +19,14 @@ class BSELive:
     
     def __init__(self):
         self.s = Session()
+        # BSE returns 403 unless Referer/Origin are the site root and the User-Agent
+        # is a recent Chrome (older versions are rejected). Bump the version when it breaks.
         h = {
             "Host": "api.bseindia.com",
-            "Referer": "https://www.bseindia.com/corporates/ann.html",
-            "User-Agent": "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.6998.166 Safari/537.36",
-            "Sec-CH-UA": '"Google Chrome";v="134", "Chromium";v="134", "Not?A_Brand";v="99"',
+            "Referer": "https://www.bseindia.com/",
+            "Origin": "https://www.bseindia.com",
+            "User-Agent": "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+            "Sec-CH-UA": '"Google Chrome";v="155", "Chromium";v="155", "Not?A_Brand";v="99"',
             "Sec-CH-UA-Mobile": "?0",
             "Sec-CH-UA-Platform": '"Windows"',
             "DNT": "1",
@@ -40,6 +43,7 @@ class BSELive:
     def get(self, route, payload={}):
         url = self.base_url + self._routes[route]
         r = self.s.get(url, params=payload)
+        r.raise_for_status()
         return r.json()
 
     @live_cache
