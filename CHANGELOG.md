@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `current_rates()` no longer returns `'-%'` for T-bills without a recent auction
 - "Standing Deposit Facility Rate" was mapped onto the `Savings Deposit Rate` key
 - `BSELive` requests were rejected with 403 Access Denied: send `Referer`/`Origin` as the site root and a current Chrome `User-Agent`; non-2xx responses now raise `HTTPError` instead of failing with `JSONDecodeError`
+- `BSELive.corporate_announcements()` — BSE now requires both dates; with neither given the last 30 days are used, and giving only one raises `ValueError`
 
 ## [0.36.0] - 2026-10-22
 

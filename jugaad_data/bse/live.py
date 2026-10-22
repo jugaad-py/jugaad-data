@@ -1,7 +1,7 @@
 """
     Implements BSE live data fetch functionality
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from requests import Session
 from ..util import live_cache
 
@@ -58,7 +58,9 @@ class BSELive:
             category (str): Category filter (default: "Result")
             subcategory (str): Subcategory filter (default: "Financial+Results")
             from_date (datetime): Start date for filtering announcements
-            to_date (datetime): End date for filtering announcements  
+            to_date (datetime): End date for filtering announcements
+                BSE requires both dates. If neither is given, the last 30 days
+                are used; giving only one raises ValueError.
             page_no (int): Page number for pagination (default: 1)
             search_type (str): Search type (default: "P")
             announcement_type (str): Type of announcement (default: "C")
@@ -75,6 +77,12 @@ class BSELive:
                 to_date=datetime(2025, 11, 3)
             )
         """
+        if bool(from_date) != bool(to_date):
+            raise ValueError("Please provide both from_date and to_date")
+        if not from_date:
+            to_date = datetime.now()
+            from_date = to_date - timedelta(days=30)
+
         # Start with required parameters only
         payload = {
             "pageno": page_no,
@@ -92,11 +100,8 @@ class BSELive:
         if scrip_code:
             payload["strScrip"] = scrip_code
             
-        if from_date:
-            payload["strPrevDate"] = from_date.strftime("%Y%m%d")
-            
-        if to_date:
-            payload["strToDate"] = to_date.strftime("%Y%m%d")
+        payload["strPrevDate"] = from_date.strftime("%Y%m%d")
+        payload["strToDate"] = to_date.strftime("%Y%m%d")
             
         return self.get("corporate_announcements", payload)
 

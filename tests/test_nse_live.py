@@ -110,6 +110,8 @@ def test_live_fno():
 @pytest.mark.live
 def test_pre_open_market():
     d = n.pre_open_market("NIFTY")
+    if d.get("msg") == "No Data Found":
+        pytest.skip("NSE has no pre-open data outside the pre-open session")
     assert "declines" in d
     assert "unchanged" in d
     assert "advances" in d
