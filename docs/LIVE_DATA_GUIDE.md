@@ -565,6 +565,23 @@ option = data[0]
 
 ---
 
+## Corporate Actions
+
+```python
+from datetime import date
+
+# Upcoming actions (no dates: only a short window around today)
+actions = n.corporate_actions()
+
+# By ex-date range, optionally for one symbol
+actions = n.corporate_actions(from_date=date(2017, 1, 1), to_date=date(2020, 12, 31), symbol="RELIANCE")
+
+# Other segments: "sme", "mf"
+actions = n.corporate_actions(segment="sme", from_date=date(2024, 1, 1), to_date=date(2024, 12, 31))
+```
+
+Records are raw NSE dicts (`symbol`, `isin`, `series`, `comp`, `faceVal`, `subject`, `exDate`, `recDate`, ...). `subject` is free text such as `"Bonus 1:1"`; parse it yourself.
+
 ## Corporate Announcements
 
 ### Get Announcements

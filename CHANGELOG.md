@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.0] - 2026-10-22
+
+### Changed
+- **Breaking:** `RBI.current_rates()` now returns structured JSON-style data instead of display strings. Percentages are fractions (`5.5%` -> `0.055`), ranges are `{"min", "max"}`, values RBI shows as `-` are `None`. Keys are snake_case (`policy_repo_rate`, `crr`, ...); FX, G-Secs and T-bills are lists (`fx`, `gsec`, `tbill`); index levels are under `indices`.
+
+### Added
+- `NSELive.corporate_actions()` — corporate actions (dividends, bonus, splits, rights, etc.) by ex-date for `equities`, `sme` or `mf`; raw NSE records, optional `symbol` and date range
+- `RBI.tbill_rate(days)` and `jugaad_data.rbi.RateNotAvailable` — raises when RBI shows no T-bill cut-off
+
+### Fixed
+- `current_rates()` no longer returns `'-%'` for T-bills without a recent auction
+- "Standing Deposit Facility Rate" was mapped onto the `Savings Deposit Rate` key
+- `BSELive` requests were rejected with 403 Access Denied: send `Referer`/`Origin` as the site root and a current Chrome `User-Agent`; non-2xx responses now raise `HTTPError` instead of failing with `JSONDecodeError`
+- `BSELive.corporate_announcements()` — BSE now requires both dates; with neither given the last 30 days are used, and giving only one raises `ValueError`
+
 ## [0.36.0] - 2026-10-22
 
 ### Added

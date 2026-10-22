@@ -57,6 +57,28 @@ def test_corporate_announcements_basic():
     assert isinstance(result["Table1"], list)
 
 @pytest.mark.live
+def test_corporate_announcements_default_dates():
+    """BSE needs both dates: none given -> last 30 days, only one given -> ValueError"""
+    bse = BSELive()
+    result = bse.corporate_announcements(scrip_code=532174)
+    assert "Table" in result
+    with pytest.raises(ValueError):
+        bse.corporate_announcements(scrip_code=532174, from_date=datetime(2024, 10, 1))
+    with pytest.raises(ValueError):
+        bse.corporate_announcements(scrip_code=532174, to_date=datetime(2024, 10, 1))
+
+@pytest.mark.live
+def test_corporate_announcements_default_dates():
+    """BSE needs both dates: none given -> last 30 days, only one given -> ValueError"""
+    bse = BSELive()
+    result = bse.corporate_announcements(scrip_code=532174)
+    assert "Table" in result
+    with pytest.raises(ValueError):
+        bse.corporate_announcements(scrip_code=532174, from_date=datetime(2024, 10, 1))
+    with pytest.raises(ValueError):
+        bse.corporate_announcements(scrip_code=532174, to_date=datetime(2024, 10, 1))
+
+@pytest.mark.live
 def test_get_announcement_with_urls():
     """Test convenience method that includes attachment URLs"""
     bse = BSELive()
