@@ -346,3 +346,14 @@ def test_bhavcopy_on_holiday():
     assert header in r
 
 """
+
+def test_full_bhavcopy_raw_raises_for_holiday_stale_file():
+    """NSE serves the previous trading day's file with 200 for a holiday"""
+    n = NSEArchives()
+    resp = MagicMock()
+    resp.text = ("SYMBOL, SERIES, DATE1, PREV_CLOSE\n"
+                 "20MICRONS, EQ, 25-Jan-2024, 166.90\n")
+    with patch.object(n, "get", return_value=resp):
+        with pytest.raises(ValueError):
+            n.full_bhavcopy_raw(date(2024, 1, 26))
+        assert n.full_bhavcopy_raw(date(2024, 1, 25)) == resp.text

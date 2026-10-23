@@ -368,6 +368,13 @@ class NSEArchives:
                                                       not available for given
                                                       date (2019 and prior
                                                       dates)""") 
+        lines = r.text.splitlines()
+        if len(lines) > 1:
+            file_dt = datetime.strptime(lines[1].split(",")[2].strip(),
+                                        "%d-%b-%Y").date()
+            if file_dt != (dt.date() if isinstance(dt, datetime) else dt):
+                raise ValueError(f"Full bhavcopy for {dt} not available, "
+                                 f"server returned data for {file_dt}")
         return r.text
 
     def full_bhavcopy_save(self, dt, dest, skip_if_present=True):
