@@ -582,6 +582,42 @@ actions = n.corporate_actions(segment="sme", from_date=date(2024, 1, 1), to_date
 
 Records are raw NSE dicts (`symbol`, `isin`, `series`, `comp`, `faceVal`, `subject`, `exDate`, `recDate`, ...). `subject` is free text such as `"Bonus 1:1"`; parse it yourself.
 
+## Event Calendar
+
+```python
+from datetime import date
+
+# Upcoming events (no dates: a short window around today)
+events = n.event_calendar()
+
+# By event date range
+events = n.event_calendar(from_date=date(2026, 8, 11), to_date=date(2026, 11, 11))
+
+# SME segment
+events = n.event_calendar(segment="sme", from_date=date(2026, 8, 11), to_date=date(2026, 11, 11))
+```
+
+Records are raw NSE dicts (`symbol`, `company`, `purpose`, `bm_desc`, `date`). `purpose` is a short category such as `"Financial Results"`; `bm_desc` is the free-text board meeting description. The `sme` segment returns a different schema (`bm_symbol`, `sm_name`, `bm_purpose`, `bm_desc`, `bm_date`, `attachment`, ...).
+
+## Shareholding Pattern
+
+```python
+from datetime import date
+
+# Filings by broadcast/submission date, optionally for one symbol
+filings = n.shareholding_pattern(
+    from_date=date(2026, 8, 11),
+    to_date=date(2026, 11, 11),
+    symbol="SBIN"
+)
+
+# Download the raw XBRL document for one filing
+entry = filings[0]
+xml = n.shareholding_pattern_xml(entry)  # or pass entry["xbrl"] URL directly
+```
+
+The filings are raw NSE records (`symbol`, `isin`, `name`, `date`, `broadcastDate`, `submissionDate`, `pr_and_prgrp`, `public_val`, `xbrl`, ...). `shareholding_pattern_xml()` returns the raw XML text; parse it with `jugaad-xbrl`.
+
 ## Corporate Announcements
 
 ### Get Announcements

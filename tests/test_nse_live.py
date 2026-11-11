@@ -225,3 +225,38 @@ def test_corporate_actions():
 
     with pytest.raises(Exception):
         n.corporate_actions(from_date=date(2024,1,1))
+
+
+@pytest.mark.live
+def test_event_calendar():
+    d = n.event_calendar()
+    assert type(d) == list
+
+    d = n.event_calendar(from_date=date(2026, 8, 11), to_date=date(2026, 11, 11))
+    assert type(d) == list
+    assert len(d) > 0
+    for key in ('symbol', 'company', 'purpose', 'bm_desc', 'date'):
+        assert key in d[0]
+
+    d = n.event_calendar(segment="sme", from_date=date(2026, 8, 11), to_date=date(2026, 11, 11))
+    assert type(d) == list
+
+    with pytest.raises(Exception):
+        n.event_calendar(from_date=date(2026, 8, 11))
+
+
+@pytest.mark.live
+def test_shareholding_pattern():
+    d = n.shareholding_pattern(from_date=date(2026,8,11), to_date=date(2026,11,11))
+    assert type(d) == list
+    assert len(d) > 0
+
+    row = d[0]
+    for key in ('symbol', 'isin', 'name', 'xbrl'):
+        assert key in row
+
+    xml = n.shareholding_pattern_xml(row)
+    assert xml.lstrip().startswith('<?xml')
+
+    with pytest.raises(Exception):
+        n.shareholding_pattern(from_date=date(2026,8,11))
