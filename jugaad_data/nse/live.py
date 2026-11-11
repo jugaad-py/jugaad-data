@@ -4,6 +4,8 @@
 from datetime import datetime
 from requests import Session
 from ..util import live_cache
+
+
 class NSELive:
     time_out = 5
     base_url = "https://www.nseindia.com/api"
@@ -27,6 +29,8 @@ class NSELive:
             "holiday_list": "/holiday-master?type=trading",
             "corporate_announcements": "/corporate-announcements",
             "corporate_actions": "/corporates-corporateActions",
+            "event_calendar": "/event-calendar",
+            "corporate_share_holdings": "/corporate-share-holdings-master",
             "integrated_filing": "/integrated-filing-results"
     }
     
@@ -508,3 +512,86 @@ class NSELive:
         if symbol:
             payload['symbol'] = symbol
         return self.get("corporate_actions", payload)
+
+    def event_calendar(self, segment="equities", from_date=None, to_date=None):
+        """Board meeting / event calendar from NSE
+        (https://www.nseindia.com/companies-listing/corporate-filings-event-calendar)
+
+        Returns the raw NSE records (list of dicts) unchanged.
+
+        Fields: symbol, company, purpose, bm_desc, date (DD-Mon-YYYY).
+        `purpose` is a short category such as "Financial Results"; `bm_desc`
+        is the free-text board meeting description.
+
+        Behaviour observed against live NSE:
+        - segment: "equities" and "sme" return records, but with different
+          schemas. The "sme" records use bm_symbol, sm_name, bm_purpose,
+          bm_desc, bm_date, attachment, etc.
+        - from_date/to_date filter on the event date, inclusive.
+        - With no dates, NSE returns a short upcoming window around today.
+
+        Args:
+            segment: "equities" (default) or "sme"
+            from_date: datetime.date - start date (requires to_date)
+            to_date: datetime.date - end date (requires from_date)
+        """
+        payload = {"index": segment}
+
+        if from_date and to_date:
+            payload['from_date'] = from_date.strftime("%d-%m-%Y")
+            payload['to_date'] = to_date.strftime("%d-%m-%Y")
+        elif from_date or to_date:
+            raise Exception("Please provide both from_date and to_date")
+        return self.get("event_calendar", payload)
+
+    def shareholding_pattern(self, segment="equities", from_date=None, to_date=None, symbol=None):
+        """Shareholding pattern filings by broadcast/submission date
+        (https://www.nseindia.com/companies-listing/corporate-filings-shareholding-pattern)
+
+        Returns the raw NSE records (list of dicts) unchanged. Each record
+        describes one filing and includes the ``xbrl`` URL of the actual
+        shareholding pattern document, which can be parsed with
+        ``shareholding_pattern_xml()``.
+
+        Fields include: symbol, isin, name, date, broadcastDate,
+        submissionDate, pr_and_prgrp (promoter %), public_val (public %),
+        revisedData, revisedStatus, xbrl, xbrlFileSize.
+
+        Args:
+            segment: "equities" (default), "sme", etc.
+            from_date: datetime.date - start date (requires to_date)
+            to_date: datetime.date - end date (requires from_date)
+            symbol: Optional NSE symbol to filter by
+        """
+        payload = {"index": segment}
+
+        if from_date and to_date:
+            payload['from_date'] = from_date.strftime("%d-%m-%Y")
+            payload['to_date'] = to_date.strftime("%d-%m-%Y")
+        elif from_date or to_date:
+            raise Exception("Please provide both from_date and to_date")
+        if symbol:
+            payload['symbol'] = symbol
+        return self.get("corporate_share_holdings", payload)
+
+    def shareholding_pattern_xml(self, entry):
+        """Download the raw XBRL document for one shareholding filing.
+
+        Args:
+            entry: Either an entry from ``shareholding_pattern()`` (a dict
+                containing an ``xbrl`` URL) or the URL itself as a string.
+
+        Returns:
+            str: Raw XML text of the filing, ready to be handed to a parser
+            such as the one in ``jugaad-xbrl``.
+        """
+        if isinstance(entry, str):
+            url = entry
+        else:
+            url = entry.get("xbrl")
+        if not url:
+            raise ValueError("Shareholding entry does not contain an 'xbrl' URL")
+        host = url.split("://", 1)[-1].split("/", 1)[0]
+        r = self.s.get(url, headers={"Host": host}, timeout=30)
+        r.raise_for_status()
+        return r.text

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.1] - 2026-11-11
+
+### Added
+- `NSELive.event_calendar()` — board meeting / event calendar for `equities` and `sme`; raw NSE records with optional date range
+- `NSELive.shareholding_pattern()` — shareholding pattern filings by broadcast/submission date for `equities`, `sme`, etc.; raw NSE records with optional `symbol` and date range
+- `NSELive.shareholding_pattern_xml()` — download the raw XBRL document for one filing (entry dict or `xbrl` URL)
+
 ## [0.37.0] - 2026-10-22
 
 ### Changed
