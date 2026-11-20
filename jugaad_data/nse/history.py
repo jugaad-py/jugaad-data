@@ -182,6 +182,8 @@ def stock_df(symbol, from_date, to_date, series="EQ"):
     if not pd:
         raise ModuleNotFoundError("Please install pandas using \n pip install pandas")
     raw = stock_raw(symbol, from_date, to_date, series)
+    if not raw:
+        return pd.DataFrame(columns=stock_final_headers)
     df = pd.DataFrame(raw)[stock_select_headers]
     df.columns = stock_final_headers
     for i, h in enumerate(stock_final_headers):
