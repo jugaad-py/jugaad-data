@@ -275,6 +275,8 @@ def derivatives_df(symbol, from_date, to_date, expiry_date, instrument_type, str
         final_headers = options_final_headers
         select_headers = options_select_headers
         dtypes = options_dtype
+    if not raw:
+        return pd.DataFrame(columns=final_headers)
     df = pd.DataFrame(raw)[select_headers]
     df.columns = final_headers
     for i, h in enumerate(final_headers):
@@ -448,6 +450,8 @@ def index_df(symbol, from_date, to_date):
     df = pd.DataFrame(raw)
     index_dtypes = {'OPEN': ut.np_float, 'HIGH': ut.np_float, 'LOW': ut.np_float, 'CLOSE': ut.np_float,
                     'Index Name': str, 'INDEX_NAME': str, 'HistoricalDate': ut.np_date}
+    if not raw:
+        return pd.DataFrame(columns=list(index_dtypes))
     for col, dtype in index_dtypes.items():
         df[col] = df[col].apply(dtype)
     return df
@@ -459,6 +463,8 @@ def index_pe_df(symbol, from_date, to_date):
     df = pd.DataFrame(raw)
     index_dtypes = {'pe': ut.np_float, 'pb': ut.np_float, 'divYield': ut.np_float,
                     'Index Name': str, 'DATE': ut.np_date}
+    if not raw:
+        return pd.DataFrame(columns=list(index_dtypes))
     for col, dtype in index_dtypes.items():
         df[col] = df[col].apply(dtype)
     return df
