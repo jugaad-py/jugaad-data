@@ -6,11 +6,15 @@ from requests import Session
 from ..util import live_cache
 
 
+class NSEBlockedError(Exception):
+    """Raised when NSE returns a non-JSON response (e.g. 403 Access Denied)."""
+
+
 class NSELive:
     time_out = 5
-    base_url = "https://www.nseindia.com/api"
-    nextapi_url = "https://www.nseindia.com/api/NextApi/apiClient/GetQuoteApi"
-    page_url = "https://www.nseindia.com/get-quotes/equity?symbol=LT"
+    base_url = "https://www.nseindia.in/api"
+    nextapi_url = "https://www.nseindia.in/api/NextApi/apiClient/GetQuoteApi"
+    page_url = "https://www.nseindia.in/get-quotes/equity?symbol=LT"
     _routes = {
             "stock_meta": "/equity-meta-info",
             "stock_quote": "/quote-equity",
@@ -37,8 +41,8 @@ class NSELive:
     def __init__(self):
         self.s = Session()
         h = {
-            "Host": "www.nseindia.com",
-            "Referer": "https://www.nseindia.com/get-quotes/equity?symbol=SBIN",
+            "Host": "www.nseindia.in",
+            "Referer": "https://www.nseindia.in/get-quotes/equity?symbol=SBIN",
             "X-Requested-With": "XMLHttpRequest",
             "pragma": "no-cache",
             "sec-fetch-dest": "empty",
@@ -59,10 +63,18 @@ class NSELive:
         self.s.headers.update(h)
         self.s.get(self.page_url)
 
+    def _json(self, url_attr, path, params):
+        """GET and parse JSON; raise NSEBlockedError on a non-JSON (blocked) response."""
+        r = self.s.get(getattr(self, url_attr) + path, params=params)
+        try:
+            return r.json()
+        except ValueError:
+            raise NSEBlockedError(
+                "NSE returned a non-JSON response (HTTP %s) for %s - the request "
+                "was likely blocked (403 Access Denied)." % (r.status_code, r.url))
+
     def get(self, route, payload={}):
-        url = self.base_url + self._routes[route]
-        r = self.s.get(url, params=payload)
-        return r.json()
+        return self._json("base_url", self._routes[route], payload)
 
     def _get_nextapi(self, function_name, **params):
         """Call NextApi endpoint with functionName and additional parameters.
@@ -76,8 +88,7 @@ class NSELive:
         """
         query_params = {"functionName": function_name}
         query_params.update(params)
-        r = self.s.get(self.nextapi_url, params=query_params)
-        return r.json()
+        return self._json("nextapi_url", "", query_params)
 
     @live_cache
     def stock_quote(self, symbol, market_type="N", series="EQ"):
@@ -253,7 +264,7 @@ class NSELive:
                                      page=1, size=20):
         """
         Returns corporate integrated filing results from NSE.
-        (https://www.nseindia.com/companies-listing/corporate-filings-integrated-filing)
+        (https://www.nseindia.in/companies-listing/corporate-filings-integrated-filing)
 
         Args:
             index:       Market segment - 'equities', 'sme', etc. (optional)
@@ -296,7 +307,7 @@ class NSELive:
                                      page=1, size=20):
         """
         Returns Integrated Filing - Financials (quarterly financial results) from NSE.
-        (https://www.nseindia.com/companies-listing/corporate-integrated-filing)
+        (https://www.nseindia.in/companies-listing/corporate-integrated-filing)
 
         Args:
             index:        Market segment - 'equities' or 'sme' (default: 'equities')
@@ -325,7 +336,7 @@ class NSELive:
                                      page=1, size=20):
         """
         Returns Integrated Filing - Governance filings from NSE.
-        (https://www.nseindia.com/companies-listing/corporate-integrated-filing)
+        (https://www.nseindia.in/companies-listing/corporate-integrated-filing)
 
         Args:
             index:        Market segment - 'equities' or 'sme' (optional; NSE currently
@@ -457,7 +468,7 @@ class NSELive:
     def corporate_announcements(self, segment='equities', from_date=None, to_date=None, symbol=None):
         """
             This function returns the corporate annoucements 
-            (https://www.nseindia.com/companies-listing/corporate-filings-announcements)
+            (https://www.nseindia.in/companies-listing/corporate-filings-announcements)
         """
 
         #from_date: 02-12-2024
@@ -476,7 +487,7 @@ class NSELive:
 
     def corporate_actions(self, segment="equities", from_date=None, to_date=None, symbol=None):
         """Corporate actions by ex-date
-        (https://www.nseindia.com/companies-listing/corporate-filings-actions)
+        (https://www.nseindia.in/companies-listing/corporate-filings-actions)
         Returns the raw NSE records (list of dicts) unchanged. The free-text
         `subject` is not parsed, e.g. "Bonus 1:1", "Rights 1:15 @ Premium Rs 1247",
         "Face Value Split (Sub-Division) - From Rs10/- Per Share To Rs 5/- Per Share".
@@ -515,7 +526,7 @@ class NSELive:
 
     def event_calendar(self, segment="equities", from_date=None, to_date=None):
         """Board meeting / event calendar from NSE
-        (https://www.nseindia.com/companies-listing/corporate-filings-event-calendar)
+        (https://www.nseindia.in/companies-listing/corporate-filings-event-calendar)
 
         Returns the raw NSE records (list of dicts) unchanged.
 
@@ -546,7 +557,7 @@ class NSELive:
 
     def shareholding_pattern(self, segment="equities", from_date=None, to_date=None, symbol=None):
         """Shareholding pattern filings by broadcast/submission date
-        (https://www.nseindia.com/companies-listing/corporate-filings-shareholding-pattern)
+        (https://www.nseindia.in/companies-listing/corporate-filings-shareholding-pattern)
 
         Returns the raw NSE records (list of dicts) unchanged. Each record
         describes one filing and includes the ``xbrl`` URL of the actual
