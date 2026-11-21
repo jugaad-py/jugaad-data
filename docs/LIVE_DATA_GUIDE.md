@@ -728,6 +728,20 @@ filings = n.corporate_integrated_filing(index="equities", page=2, size=50)
 
 > **Note:** `from_date` and `to_date` must be provided together. Providing only one raises an exception.
 
+### Annual Reports
+
+```python
+from jugaad_data.nse import NSELive
+n = NSELive()
+
+r = n.annual_reports("YATHARTH")            # index defaults to 'equities'
+r = n.annual_reports("XYZ", index="sme")    # SME segment
+for rec in r['data']:
+    print(rec['fromYr'], rec['toYr'], rec['fileName'])
+```
+
+Parameters: `symbol`, `index` (`'equities'` default or `'sme'`), `issuer` (optional full company name). Each record has `companyName`, `fromYr`, `toYr`, `submission_type`, `broadcast_dttm`, `disseminationDateTime`, `timeTaken`, `fileName` (PDF/zip URL) and `attFileSize`; older records may have `None` or `'-'` for some fields.
+
 ### Financial Results
 
 `integrated_filing_financials()` is a shortcut for the `'Integrated Filing- Financials'` type, i.e. quarterly financial results.

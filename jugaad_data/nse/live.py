@@ -35,7 +35,8 @@ class NSELive:
             "corporate_actions": "/corporates-corporateActions",
             "event_calendar": "/event-calendar",
             "corporate_share_holdings": "/corporate-share-holdings-master",
-            "integrated_filing": "/integrated-filing-results"
+            "integrated_filing": "/integrated-filing-results",
+            "annual_reports": "/annual-reports"
     }
     
     def __init__(self):
@@ -360,6 +361,27 @@ class NSELive:
                                                 from_date=from_date, to_date=to_date,
                                                 filing_type="Integrated Filing- Governance",
                                                 page=page, size=size)
+
+    def annual_reports(self, symbol, index="equities", issuer=None):
+        """
+        Returns the annual reports filed by a company on NSE.
+        (https://www.nseindia.in/api/annual-reports)
+
+        Args:
+            symbol: Stock symbol e.g. 'YATHARTH'
+            index:  Market segment - 'equities' (default) or 'sme'
+            issuer: Full company name (optional; NSE works without it)
+
+        Returns:
+            Dict with key data: list of records (newest first) with keys
+            companyName, fromYr, toYr, submission_type, broadcast_dttm,
+            disseminationDateTime, timeTaken, fileName (URL of the PDF/zip),
+            attFileSize. Older records may have None/'-' for some fields.
+        """
+        params = {"index": index, "symbol": symbol}
+        if issuer:
+            params["issuer"] = issuer
+        return self.get("annual_reports", params)
 
     @live_cache
     def symbol_meta(self, symbol):
