@@ -260,3 +260,17 @@ def test_shareholding_pattern():
 
     with pytest.raises(Exception):
         n.shareholding_pattern(from_date=date(2026,8,11))
+
+
+@pytest.mark.live
+def test_annual_reports():
+    d = n.annual_reports("YATHARTH")
+    assert isinstance(d['data'], list)
+    assert len(d['data']) > 0
+    for rec in d['data']:
+        assert rec['companyName']
+        assert rec['fileName'].startswith("https://")
+
+    # issuer is optional but accepted
+    d2 = n.annual_reports("YATHARTH", issuer="Yatharth Hospital & Trauma Care Services Limited")
+    assert len(d2['data']) == len(d['data'])
