@@ -101,6 +101,14 @@ def test_bhavcopy_historical_udiff():
 #     assert '2019' in e.value.args[0]    
 
 @pytest.mark.live
+def test_full_bhavcopy_holiday():
+    """NSE serves 25-Jan-2024's file for the 26-Jan-2024 holiday (#131)"""
+    r = full_bhavcopy_raw(date(2024, 1, 25))
+    assert ", 25-Jan-2024," in r.splitlines()[1]
+    with pytest.raises(ValueError, match="25-Jan-2024"):
+        full_bhavcopy_raw(date(2024, 1, 26))
+
+@pytest.mark.live
 def test_bhavcopy_fo_recent():
     """Test derivatives bhavcopy for recent date using UDiff format
 
@@ -336,6 +344,51 @@ def test_expiry_dates_parses_udiff_format():
     with patch("jugaad_data.nse.archives.bhavcopy_fo_raw", return_value=udiff_text):
         dts = expiry_dates(date(2024, 7, 10), "FUTIDX", "NIFTY")
     assert dts == [date(2024, 7, 25)]
+
+FULL_BHAVCOPY_TEXT = (
+    "SYMBOL, SERIES, DATE1, PREV_CLOSE, OPEN_PRICE, HIGH_PRICE, LOW_PRICE, "
+    "LAST_PRICE, CLOSE_PRICE, AVG_PRICE, TTL_TRD_QNTY, TURNOVER_LACS, "
+    "NO_OF_TRADES, DELIV_QTY, DELIV_PER\n"
+    "20MICRONS, EQ, 25-Jan-2024, 166.90, 169.00, 177.70, 166.05, 176.00, "
+    "175.60, 173.14, 242415, 419.71, 12301, 111016, 45.80\n"
+)
+
+def _full_bhavcopy_resp(text=FULL_BHAVCOPY_TEXT, status_code=200):
+    resp = MagicMock()
+    resp.status_code = status_code
+    resp.text = text
+    if status_code >= 400:
+        resp.raise_for_status.side_effect = requests.exceptions.HTTPError(
+            str(status_code))
+    return resp
+
+def test_full_bhavcopy_raw_returns_text_for_trading_day():
+    n = NSEArchives()
+    with patch.object(n.s, "get", return_value=_full_bhavcopy_resp()):
+        assert n.full_bhavcopy_raw(date(2024, 1, 25)) == FULL_BHAVCOPY_TEXT
+
+def test_full_bhavcopy_raw_raises_for_holiday():
+    """On a weekday holiday (26-Jan-2024) NSE serves the previous trading
+    day's file with 200 OK; its DATE1 column is 25-Jan-2024 (#131)"""
+    n = NSEArchives()
+    with patch.object(n.s, "get", return_value=_full_bhavcopy_resp()):
+        with pytest.raises(ValueError, match="25-Jan-2024"):
+            n.full_bhavcopy_raw(date(2024, 1, 26))
+
+def test_full_bhavcopy_raw_raises_when_file_missing():
+    """NSE returns a 404 HTML page for weekends"""
+    n = NSEArchives()
+    resp = _full_bhavcopy_resp("<!DOCTYPE html>\n<html>", 404)
+    with patch.object(n.s, "get", return_value=resp):
+        with pytest.raises(requests.exceptions.HTTPError):
+            n.full_bhavcopy_raw(date(2024, 1, 27))
+
+def test_full_bhavcopy_save_does_not_save_holiday(tmp_path):
+    n = NSEArchives()
+    with patch.object(n.s, "get", return_value=_full_bhavcopy_resp()):
+        with pytest.raises(ValueError):
+            n.full_bhavcopy_save(date(2024, 1, 26), str(tmp_path))
+    assert list(tmp_path.iterdir()) == []
 
 """
 @pytest.mark.live
