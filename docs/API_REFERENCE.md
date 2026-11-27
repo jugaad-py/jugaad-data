@@ -373,6 +373,8 @@ Download full equity bhavcopy (includes delivery data).
 
 **File format:** `cm{date}bhav.csv` with delivery percentage
 
+**Raises:** `ValueError` for a weekday holiday (NSE serves the previous trading day's file), `requests.HTTPError` when NSE has no file (weekends).
+
 #### `bhavcopy_fo_save(date, path)`
 Download futures & options bhavcopy.
 

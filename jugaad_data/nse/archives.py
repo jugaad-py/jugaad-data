@@ -354,7 +354,13 @@ class NSEArchives:
             return fname
 
     def full_bhavcopy_raw(self, dt):
-        """Downloads full raw bhavcopy text for a specific date"""
+        """Downloads full raw bhavcopy text for a specific date
+
+        Raises:
+            requests.HTTPError: If NSE has no file for the date (e.g. weekends)
+            ValueError: If the file is for another date. On a weekday holiday
+                NSE serves the previous trading day's file with 200 OK.
+        """
         
         dd = dt.strftime('%d')
         mm = dt.strftime('%m')
@@ -368,6 +374,13 @@ class NSEArchives:
                                                       not available for given
                                                       date (2019 and prior
                                                       dates)""") 
+        r.raise_for_status()
+        rows = csv.DictReader(io.StringIO(r.text), skipinitialspace=True)
+        row = next(rows, {})
+        expected = dt.strftime('%d-%b-%Y')
+        if row.get('DATE1') != expected:
+            raise ValueError(f"Full bhavcopy for {expected} is not available "
+                             f"(holiday?), NSE returned {row.get('DATE1')}")
         return r.text
 
     def full_bhavcopy_save(self, dt, dest, skip_if_present=True):
